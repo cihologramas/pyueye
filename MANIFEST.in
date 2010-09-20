@@ -1,0 +1,4 @@
+include MANIFEST.in copyright README PKG-INFO description-pak
+include ueye.py
+include setup.py
+recursive-include ueye *.pyx *.py *.pxd

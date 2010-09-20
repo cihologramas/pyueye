@@ -1,0 +1,10 @@
+Metadata-Version: 1.0
+Name: pyueye
+Version: 0.1
+Summary: Python binding for ueye camera drivers
+Home-page: https://trac.cihologramas.com/trac/
+Author: Ricardo Amezquita Orozco
+Author-email: ramezquitao@cihologramas.com
+License: BSD
+Description: UNKNOWN
+Platform: UNKNOWN
