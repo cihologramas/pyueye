@@ -40,8 +40,6 @@ EVT_FLOATCOMBO_BOTTOM = wx.PyEventBinder(wxEVT_FLOATCOMBO_BOTTOM, 0)
 wxEVT_FLOATCOMBO_THUMBRELEASE = wx.NewEventType()
 EVT_FLOATCOMBO_THUMBRELEASE = wx.PyEventBinder(wxEVT_FLOATCOMBO_THUMBRELEASE, 0)
 
-wxEVT_FLOATCOMBO_TEXT_ENTER = wx.NewEventType()
-EVT_FLOATCOMBO_TEXT_ENTER = wx.PyEventBinder(wxEVT_FLOATCOMBO_TEXT_ENTER, 0)
 
 class FloatComboEvent(wx.PyCommandEvent):
 
@@ -220,7 +218,7 @@ class FloatCombo(wx.Control):
             val=self.Value
         self.SetValue(val)
         
-        self.PostValue(wxEVT_FLOATCOMBO_TEXT_ENTER)
+        self.PostValue(wxEVT_FLOATCOMBO)
         
         
     def OnSize(self,event):
