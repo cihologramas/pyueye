@@ -169,3 +169,5 @@ class wxVidWindow(wx.Window):
     def OnSize(self,event):
         self.panel.SetSize(event.GetSize())
         event.Skip() 
+
+    

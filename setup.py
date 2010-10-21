@@ -12,11 +12,10 @@ except:
     print "copy from www.cython.org and install it"
     sys.exit(1)
 
-#from setuptools import find_packages#,setup
-
 
 # scan the directory for extension files, converting
 # them to extension names in dotted notation
+
 def scandir(dir, files=[]):
     for file in os.listdir(dir):
         path = os.path.join(dir, file)
@@ -45,8 +44,6 @@ def makeExtension(extName):
 
 extNames = scandir(".")
 
-print extNames
-
 # and build up the set of Extension objects
 extensions = [makeExtension(name) for name in extNames]
 
@@ -60,7 +57,8 @@ setup(
         license='BSD',
         url='https://trac.cihologramas.com/trac/',
         ext_modules=extensions,
-        packages=["ueye"],
+        packages=["ueye","wxueye"],
+        scripts=['wxVidCap.py'],
         cmdclass = {'build_ext': build_ext},
     )
 
