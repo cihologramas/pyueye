@@ -1,4 +1,4 @@
-# Copyright (c) 2010, Combustión Ingenieros Ltda.
+# Copyright (c) 2010, Combustion Ingenieros Ltda.
 # All rights reserved.
 #       Redistribution and use in source and binary forms, with or without
 #       modification, are permitted provided that the following conditions are
@@ -26,7 +26,7 @@
 #       (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #       OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-# Author: Ricardo Amézquita Orozco <ramezquitao@cihologramas.com>
+# Author: Ricardo Amezquita Orozco <ramezquitao@cihologramas.com>
 
 
 # Functions definition
@@ -1933,77 +1933,77 @@ cdef class Cam:
         self.CheckNoSuccess(rv)
         return rv
     
-    def SetBadPixelCorrectionTable (self, INT nMode, list pixList):
-        '''Set or get the bad pixel correction table.
-          
-        This method can be used to set the table containing the hot pixel 
-        positions which will be used by the user-defined hot pixel correction 
-        function. You can enable hot pixel correction by calling 
-        self.SetBadPixelCorrection(). Each value in List consists of an 
-        integer number. The coordinates are listed first X, then Y.
-        
-        A table with 3 hot pixels must contain 6 values and will be 
-        structured as follows:
-
-        X1 - Y1 - X2 - Y2 - X3 - Y3 
-
-        Syntax:
-        =======
-        
-        rl=cam.SetBadPixelCorrectionTable (nMode, pixList):
-        
-        Input Parameters:
-        =================
-        nMode:
-            - SET_BADPIXEL_LIST: Sets a new user-defined list. The List parameter 
-              contains the data using the format described above.
-            - GET_BADPIXEL_LIST: Returns a python list containig the previously 
-              user-defined hot pixel list. In this case List is not used.
-            
-        pixList: 
-            List containing the the hot pixel table, using the format described 
-            above
-
-        Return Values:
-        ==============
-        
-        rl:
-            A a python list containig the user-defined hot pixel list.
-        
-        '''
-        
-        cdef WORD * pList
-        
-        if nMode==IS_SET_BADPIXEL_LIST:
-            n=len(pixList)
-            assert n%2==0, "Table lenght must be even"
-            pList= <WORD *>malloc((n+1)*sizeof(WORD))
-            pList[0]=n/2
-        
-            for i,d in enumerate(pixList):
-                pList[i+1]=d
-        
-            rv=is_SetBadPixelCorrectionTable (self.cid, nMode, pList)
-        
-            self.CheckNoSuccess(rv)
-            free(pList)
-            rl= pixList
-        elif nMode==IS_GET_BADPIXEL_LIST:
-            rl=[]
-            n=is_SetBadPixelCorrectionTable (self.cid, IS_GET_LIST_SIZE, pList)
-            
-            pList= <WORD *>malloc((2*n+1)*sizeof(WORD))
-            rv=is_SetBadPixelCorrectionTable (self.cid, nMode, pList)
-            self.CheckNoSuccess(rv)
-            
-            for i in range(2*n):
-                rl.append(pList[i+1])
-                free(pList)
-            
-        else:
-            raise Exception("Invalid nMode Parameter")
-        
-        return rl
+    #~ def SetBadPixelCorrectionTable (self, INT nMode, list pixList):
+        #~ '''Set or get the bad pixel correction table.
+          #~ 
+        #~ This method can be used to set the table containing the hot pixel 
+        #~ positions which will be used by the user-defined hot pixel correction 
+        #~ function. You can enable hot pixel correction by calling 
+        #~ self.SetBadPixelCorrection(). Each value in List consists of an 
+        #~ integer number. The coordinates are listed first X, then Y.
+        #~ 
+        #~ A table with 3 hot pixels must contain 6 values and will be 
+        #~ structured as follows:
+#~ 
+        #~ X1 - Y1 - X2 - Y2 - X3 - Y3 
+#~ 
+        #~ Syntax:
+        #~ =======
+        #~ 
+        #~ rl=cam.SetBadPixelCorrectionTable (nMode, pixList):
+        #~ 
+        #~ Input Parameters:
+        #~ =================
+        #~ nMode:
+            #~ - SET_BADPIXEL_LIST: Sets a new user-defined list. The List parameter 
+              #~ contains the data using the format described above.
+            #~ - GET_BADPIXEL_LIST: Returns a python list containig the previously 
+              #~ user-defined hot pixel list. In this case List is not used.
+            #~ 
+        #~ pixList: 
+            #~ List containing the the hot pixel table, using the format described 
+            #~ above
+#~ 
+        #~ Return Values:
+        #~ ==============
+        #~ 
+        #~ rl:
+            #~ A a python list containig the user-defined hot pixel list.
+        #~ 
+        #~ '''
+        #~ 
+        #~ cdef WORD * pList
+        #~ 
+        #~ if nMode==IS_SET_BADPIXEL_LIST:
+            #~ n=len(pixList)
+            #~ assert n%2==0, "Table lenght must be even"
+            #~ pList= <WORD *>malloc((n+1)*sizeof(WORD))
+            #~ pList[0]=n/2
+        #~ 
+            #~ for i,d in enumerate(pixList):
+                #~ pList[i+1]=d
+        #~ 
+            #~ rv=is_SetBadPixelCorrectionTable (self.cid, nMode, pList)
+        #~ 
+            #~ self.CheckNoSuccess(rv)
+            #~ free(pList)
+            #~ rl= pixList
+        #~ elif nMode==IS_GET_BADPIXEL_LIST:
+            #~ rl=[]
+            #~ n=is_SetBadPixelCorrectionTable (self.cid, IS_GET_LIST_SIZE, pList)
+            #~ 
+            #~ pList= <WORD *>malloc((2*n+1)*sizeof(WORD))
+            #~ rv=is_SetBadPixelCorrectionTable (self.cid, nMode, pList)
+            #~ self.CheckNoSuccess(rv)
+            #~ 
+            #~ for i in range(2*n):
+                #~ rl.append(pList[i+1])
+                #~ free(pList)
+            #~ 
+        #~ else:
+            #~ raise Exception("Invalid nMode Parameter")
+        #~ 
+        #~ return rl
     
     def SetColorConverter (self, INT ColorMode, INT ConvertMode):
         '''Set color converter

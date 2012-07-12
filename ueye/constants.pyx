@@ -1,4 +1,4 @@
-# Copyright (c) 2010, Combustión Ingenieros Ltda.
+# Copyright (c) 2010, Combustion Ingenieros Ltda.
 # All rights reserved.
 #       Redistribution and use in source and binary forms, with or without
 #       modification, are permitted provided that the following conditions are
@@ -26,7 +26,7 @@
 #       (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #       OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-# Author: Ricardo Amézquita Orozco <ramezquitao@cihologramas.com>
+# Author: Ricardo Amezquita Orozco <ramezquitao@cihologramas.com>
 
 from ueye cimport *
 
@@ -117,8 +117,9 @@ SENSOR_UI241X_C                 =   IS_SENSOR_UI241X_C                # Sony CCD
 SENSOR_UI234X_M                 =   IS_SENSOR_UI234X_M                # Sony CCD sensor - SXGA monochrome
 SENSOR_UI234X_C                 =   IS_SENSOR_UI234X_C                # Sony CCD sensor - SXGA color
 
-SENSOR_UI233X_M                 =   IS_SENSOR_UI233X_M                # Kodak CCD sensor - 1MP mono
-SENSOR_UI233X_C                 =   IS_SENSOR_UI233X_C                # Kodak CCD sensor - 1MP color
+#Not defines in 3.90
+#SENSOR_UI233X_M                 =   IS_SENSOR_UI233X_M                # Kodak CCD sensor - 1MP mono
+#SENSOR_UI233X_C                 =   IS_SENSOR_UI233X_C                # Kodak CCD sensor - 1MP color
 
 SENSOR_UI221X_M                 =   IS_SENSOR_UI221X_M                # Sony CCD sensor - VGA monochrome
 SENSOR_UI221X_C                 =   IS_SENSOR_UI221X_C                # Sony CCD sensor - VGA color
@@ -387,8 +388,10 @@ RENDER_NORMAL                   =   IS_RENDER_NORMAL
 RENDER_FIT_TO_WINDOW            =   IS_RENDER_FIT_TO_WINDOW             
 RENDER_DOWNSCALE_1_2            =   IS_RENDER_DOWNSCALE_1_2             
 RENDER_MIRROR_UPDOWN            =   IS_RENDER_MIRROR_UPDOWN             
-RENDER_DOUBLE_HEIGHT            =   IS_RENDER_DOUBLE_HEIGHT             
-RENDER_HALF_HEIGHT              =   IS_RENDER_HALF_HEIGHT               
+
+# Not defined in 3.90
+#RENDER_DOUBLE_HEIGHT            =   IS_RENDER_DOUBLE_HEIGHT             
+#RENDER_HALF_HEIGHT              =   IS_RENDER_HALF_HEIGHT               
 
 
 # ----------------------------------------------------------------------------
@@ -401,15 +404,19 @@ GET_TRIGGER_INPUTS              =   IS_GET_TRIGGER_INPUTS
 GET_SUPPORTED_TRIGGER_MODE      =   IS_GET_SUPPORTED_TRIGGER_MODE       
 GET_TRIGGER_COUNTER             =   IS_GET_TRIGGER_COUNTER              
 
-# old defines for compatibility 
-SET_TRIG_OFF                    =   IS_SET_TRIG_OFF                     
-SET_TRIG_HI_LO                  =   IS_SET_TRIG_HI_LO                   
-SET_TRIG_LO_HI                  =   IS_SET_TRIG_LO_HI                   
-SET_TRIG_SOFTWARE               =   IS_SET_TRIG_SOFTWARE                
-SET_TRIG_HI_LO_SYNC             =   IS_SET_TRIG_HI_LO_SYNC              
-SET_TRIG_LO_HI_SYNC             =   IS_SET_TRIG_LO_HI_SYNC              
 
-SET_TRIG_MASK                   =   IS_SET_TRIG_MASK                    
+
+# old defines for compatibility 
+
+# Not defined in 3.90
+#SET_TRIG_OFF                    =   IS_SET_TRIG_OFF                     
+#SET_TRIG_HI_LO                  =   IS_SET_TRIG_HI_LO                   
+#SET_TRIG_LO_HI                  =   IS_SET_TRIG_LO_HI                   
+#SET_TRIG_SOFTWARE               =   IS_SET_TRIG_SOFTWARE                
+#SET_TRIG_HI_LO_SYNC             =   IS_SET_TRIG_HI_LO_SYNC              
+#SET_TRIG_LO_HI_SYNC             =   IS_SET_TRIG_LO_HI_SYNC              
+
+#SET_TRIG_MASK                   =   IS_SET_TRIG_MASK                    
 
 # New defines
 SET_TRIGGER_CONTINUOUS          =   IS_SET_TRIGGER_CONTINUOUS           
@@ -437,8 +444,10 @@ GET_DEFAULT_PIXEL_CLK           =   IS_GET_DEFAULT_PIXEL_CLK
 GET_FRAMERATE                   =   IS_GET_FRAMERATE                    
 GET_DEFAULT_FRAMERATE           =   IS_GET_DEFAULT_FRAMERATE            
 # exposure
-GET_EXPOSURE_TIME               =   IS_GET_EXPOSURE_TIME                
-GET_DEFAULT_EXPOSURE            =   IS_GET_DEFAULT_EXPOSURE             
+#Not defined in 3.90
+#GET_EXPOSURE_TIME               =   IS_GET_EXPOSURE_TIME                
+#GET_DEFAULT_EXPOSURE            =   IS_GET_DEFAULT_EXPOSURE             
+         
 
 # ----------------------------------------------------------------------------
 # Gain definitions
@@ -547,15 +556,20 @@ CAMERA_LUT_128                  =   IS_CAMERA_LUT_128
 # image parameters
 # ----------------------------------------------------------------------------
 # brightness
-GET_BRIGHTNESS                  =   IS_GET_BRIGHTNESS                   
-MIN_BRIGHTNESS                  =   IS_MIN_BRIGHTNESS                   
-MAX_BRIGHTNESS                  =   IS_MAX_BRIGHTNESS                   
-DEFAULT_BRIGHTNESS              =   IS_DEFAULT_BRIGHTNESS               
+
+
+#Not defined in 3.90
+#GET_BRIGHTNESS                  =   IS_GET_BRIGHTNESS                   
+#MIN_BRIGHTNESS                  =   IS_MIN_BRIGHTNESS                   
+#MAX_BRIGHTNESS                  =   IS_MAX_BRIGHTNESS                   
+#DEFAULT_BRIGHTNESS              =   IS_DEFAULT_BRIGHTNESS               
+
 # contrast
-GET_CONTRAST                    =   IS_GET_CONTRAST                     
-MIN_CONTRAST                    =   IS_MIN_CONTRAST                     
-MAX_CONTRAST                    =   IS_MAX_CONTRAST                     
-DEFAULT_CONTRAST                =   IS_DEFAULT_CONTRAST                 
+#Not defined in 3.90
+#GET_CONTRAST                    =   IS_GET_CONTRAST                     
+#MIN_CONTRAST                    =   IS_MIN_CONTRAST                     
+#MAX_CONTRAST                    =   IS_MAX_CONTRAST                     
+#DEFAULT_CONTRAST                =   IS_DEFAULT_CONTRAST                 
 # gamma
 GET_GAMMA                       =   IS_GET_GAMMA                        
 MIN_GAMMA                       =   IS_MIN_GAMMA                        
@@ -571,41 +585,43 @@ MIN_SATURATION_V                =   IS_MIN_SATURATION_V
 MAX_SATURATION_V                =   IS_MAX_SATURATION_V                 
 DEFAULT_SATURATION_V            =   IS_DEFAULT_SATURATION_V             
 # hue  (Falcon)
-GET_HUE                         =   IS_GET_HUE                          
-MIN_HUE                         =   IS_MIN_HUE                          
-MAX_HUE                         =   IS_MAX_HUE                          
-DEFAULT_HUE                     =   IS_DEFAULT_HUE                      
+#Not defined in 3.90
+#GET_HUE                         =   IS_GET_HUE                          
+#MIN_HUE                         =   IS_MIN_HUE                          
+#MAX_HUE                         =   IS_MAX_HUE                          
+#DEFAULT_HUE                     =   IS_DEFAULT_HUE                      
 
 
 # ----------------------------------------------------------------------------
 # Image position and size
 # ----------------------------------------------------------------------------
-GET_IMAGE_SIZE_X                =   IS_GET_IMAGE_SIZE_X                 
-GET_IMAGE_SIZE_Y                =   IS_GET_IMAGE_SIZE_Y                 
-GET_IMAGE_SIZE_X_INC            =   IS_GET_IMAGE_SIZE_X_INC             
-GET_IMAGE_SIZE_Y_INC            =   IS_GET_IMAGE_SIZE_Y_INC             
-GET_IMAGE_SIZE_X_MIN            =   IS_GET_IMAGE_SIZE_X_MIN             
-GET_IMAGE_SIZE_Y_MIN            =   IS_GET_IMAGE_SIZE_Y_MIN             
-GET_IMAGE_SIZE_X_MAX            =   IS_GET_IMAGE_SIZE_X_MAX             
-GET_IMAGE_SIZE_Y_MAX            =   IS_GET_IMAGE_SIZE_Y_MAX             
+#Not defined in 3.90
+#GET_IMAGE_SIZE_X                =   IS_GET_IMAGE_SIZE_X                 
+#GET_IMAGE_SIZE_Y                =   IS_GET_IMAGE_SIZE_Y                 
+#GET_IMAGE_SIZE_X_INC            =   IS_GET_IMAGE_SIZE_X_INC             
+#GET_IMAGE_SIZE_Y_INC            =   IS_GET_IMAGE_SIZE_Y_INC             
+#GET_IMAGE_SIZE_X_MIN            =   IS_GET_IMAGE_SIZE_X_MIN             
+#GET_IMAGE_SIZE_Y_MIN            =   IS_GET_IMAGE_SIZE_Y_MIN             
+#GET_IMAGE_SIZE_X_MAX            =   IS_GET_IMAGE_SIZE_X_MAX             
+#GET_IMAGE_SIZE_Y_MAX            =   IS_GET_IMAGE_SIZE_Y_MAX             
 
-GET_IMAGE_POS_X                 =   IS_GET_IMAGE_POS_X                  
-GET_IMAGE_POS_Y                 =   IS_GET_IMAGE_POS_Y                  
-GET_IMAGE_POS_X_ABS             =   IS_GET_IMAGE_POS_X_ABS              
-GET_IMAGE_POS_Y_ABS             =   IS_GET_IMAGE_POS_Y_ABS              
-GET_IMAGE_POS_X_INC             =   IS_GET_IMAGE_POS_X_INC              
-GET_IMAGE_POS_Y_INC             =   IS_GET_IMAGE_POS_Y_INC              
-GET_IMAGE_POS_X_MIN             =   IS_GET_IMAGE_POS_X_MIN              
-GET_IMAGE_POS_Y_MIN             =   IS_GET_IMAGE_POS_Y_MIN              
-GET_IMAGE_POS_X_MAX             =   IS_GET_IMAGE_POS_X_MAX              
-GET_IMAGE_POS_Y_MAX             =   IS_GET_IMAGE_POS_Y_MAX              
+#GET_IMAGE_POS_X                 =   IS_GET_IMAGE_POS_X                  
+#GET_IMAGE_POS_Y                 =   IS_GET_IMAGE_POS_Y                  
+#GET_IMAGE_POS_X_ABS             =   IS_GET_IMAGE_POS_X_ABS              
+#GET_IMAGE_POS_Y_ABS             =   IS_GET_IMAGE_POS_Y_ABS              
+#GET_IMAGE_POS_X_INC             =   IS_GET_IMAGE_POS_X_INC              
+#GET_IMAGE_POS_Y_INC             =   IS_GET_IMAGE_POS_Y_INC              
+#GET_IMAGE_POS_X_MIN             =   IS_GET_IMAGE_POS_X_MIN              
+#GET_IMAGE_POS_Y_MIN             =   IS_GET_IMAGE_POS_Y_MIN              
+#GET_IMAGE_POS_X_MAX             =   IS_GET_IMAGE_POS_X_MAX              
+#GET_IMAGE_POS_Y_MAX             =   IS_GET_IMAGE_POS_Y_MAX              
 
-SET_IMAGE_POS_X_ABS             =   IS_SET_IMAGE_POS_X_ABS              
-SET_IMAGE_POS_Y_ABS             =   IS_SET_IMAGE_POS_Y_ABS              
+#SET_IMAGE_POS_X_ABS             =   IS_SET_IMAGE_POS_X_ABS              
+#SET_IMAGE_POS_Y_ABS             =   IS_SET_IMAGE_POS_Y_ABS              
 
 # Compatibility
-SET_IMAGEPOS_X_ABS              =   IS_SET_IMAGEPOS_X_ABS               
-SET_IMAGEPOS_Y_ABS              =   IS_SET_IMAGEPOS_Y_ABS               
+#SET_IMAGEPOS_X_ABS              =   IS_SET_IMAGEPOS_X_ABS               
+#SET_IMAGEPOS_Y_ABS              =   IS_SET_IMAGEPOS_Y_ABS               
 
 
 # ----------------------------------------------------------------------------
@@ -654,8 +670,9 @@ SUBSAMPLING_MASK_VERTICAL       =   IS_SUBSAMPLING_MASK_VERTICAL
 SUBSAMPLING_MASK_HORIZONTAL     =   IS_SUBSAMPLING_MASK_HORIZONTAL          
 
 # Compatibility
-SUBSAMPLING_VERT                =   IS_SUBSAMPLING_VERT                     
-SUBSAMPLING_HOR                 =   IS_SUBSAMPLING_HOR                      
+#Not in 3.90
+#SUBSAMPLING_VERT                =   IS_SUBSAMPLING_VERT                     
+#SUBSAMPLING_HOR                 =   IS_SUBSAMPLING_HOR                      
 
 
 # ----------------------------------------------------------------------------
@@ -691,8 +708,9 @@ BINNING_MASK_VERTICAL           =   IS_BINNING_MASK_VERTICAL
 BINNING_MASK_HORIZONTAL         =   IS_BINNING_MASK_HORIZONTAL          
 
 # Compatibility
-BINNING_VERT                    =   IS_BINNING_VERT                     
-BINNING_HOR                     =   IS_BINNING_HOR                      
+#Not in 3.90
+#BINNING_VERT                    =   IS_BINNING_VERT                     
+#BINNING_HOR                     =   IS_BINNING_HOR                      
 
 # ----------------------------------------------------------------------------
 # Auto Control Parameter
@@ -850,20 +868,22 @@ CM_ALL_POSSIBLE                 =   IS_CM_ALL_POSSIBLE
 # ----------------------------------------------------------------------------
 # Hotpixel correction
 # ----------------------------------------------------------------------------
-GET_BPC_MODE                    =   IS_GET_BPC_MODE                      
-GET_BPC_THRESHOLD               =   IS_GET_BPC_THRESHOLD                 
-GET_BPC_SUPPORTED_MODE          =   IS_GET_BPC_SUPPORTED_MODE            
+#Not in 390
+#GET_BPC_MODE                    =   IS_GET_BPC_MODE                      
+#GET_BPC_THRESHOLD               =   IS_GET_BPC_THRESHOLD                 
+#GET_BPC_SUPPORTED_MODE          =   IS_GET_BPC_SUPPORTED_MODE            
 
-BPC_DISABLE                     =   IS_BPC_DISABLE                       
-BPC_ENABLE_LEVEL_1              =   IS_BPC_ENABLE_LEVEL_1                
-BPC_ENABLE_LEVEL_2              =   IS_BPC_ENABLE_LEVEL_2                
-BPC_ENABLE_USER                 =   IS_BPC_ENABLE_USER                   
-BPC_ENABLE_SOFTWARE             =   IS_BPC_ENABLE_SOFTWARE          
-BPC_ENABLE_HARDWARE             =   IS_BPC_ENABLE_HARDWARE          
+#BPC_DISABLE                     =   IS_BPC_DISABLE                       
+#BPC_ENABLE_LEVEL_1              =   IS_BPC_ENABLE_LEVEL_1                
+#BPC_ENABLE_LEVEL_2              =   IS_BPC_ENABLE_LEVEL_2                
+#BPC_ENABLE_USER                 =   IS_BPC_ENABLE_USER                   
+#BPC_ENABLE_SOFTWARE             =   IS_BPC_ENABLE_SOFTWARE          
+#BPC_ENABLE_HARDWARE             =   IS_BPC_ENABLE_HARDWARE          
 
-SET_BADPIXEL_LIST               =   IS_SET_BADPIXEL_LIST                 
-GET_BADPIXEL_LIST               =   IS_GET_BADPIXEL_LIST                 
-GET_LIST_SIZE                   =   IS_GET_LIST_SIZE                     
+#The following constants where removed in the 3.9 drivers
+#SET_BADPIXEL_LIST               =   IS_SET_BADPIXEL_LIST                 
+#GET_BADPIXEL_LIST               =   IS_GET_BADPIXEL_LIST                 
+#GET_LIST_SIZE                   =   IS_GET_LIST_SIZE                     
 
 
 # ----------------------------------------------------------------------------
@@ -938,41 +958,43 @@ SET_WB_HORIZON                  =   IS_SET_WB_HORIZON
 # ----------------------------------------------------------------------------
 # flash strobe constants
 # ----------------------------------------------------------------------------
-GET_FLASHSTROBE_MODE            =   IS_GET_FLASHSTROBE_MODE             
-GET_FLASHSTROBE_LINE            =   IS_GET_FLASHSTROBE_LINE             
-GET_SUPPORTED_FLASH_IO_PORTS    =   IS_GET_SUPPORTED_FLASH_IO_PORTS     
+#Not in 3.90
+#GET_FLASHSTROBE_MODE            =   IS_GET_FLASHSTROBE_MODE             
+#GET_FLASHSTROBE_LINE            =   IS_GET_FLASHSTROBE_LINE             
+#GET_SUPPORTED_FLASH_IO_PORTS    =   IS_GET_SUPPORTED_FLASH_IO_PORTS     
 
-SET_FLASH_OFF                   =   IS_SET_FLASH_OFF                    
-SET_FLASH_ON                    =   IS_SET_FLASH_ON                     
-SET_FLASH_LO_ACTIVE             =   IS_SET_FLASH_LO_ACTIVE          
-SET_FLASH_HI_ACTIVE             =   IS_SET_FLASH_HI_ACTIVE              
-SET_FLASH_HIGH                  =   IS_SET_FLASH_HIGH                   
-SET_FLASH_LOW                   =   IS_SET_FLASH_LOW                    
-SET_FLASH_LO_ACTIVE_FREERUN     =   IS_SET_FLASH_LO_ACTIVE_FREERUN      
-SET_FLASH_HI_ACTIVE_FREERUN     =   IS_SET_FLASH_HI_ACTIVE_FREERUN      
-SET_FLASH_IO_1                  =   IS_SET_FLASH_IO_1                   
-SET_FLASH_IO_2                  =   IS_SET_FLASH_IO_2                   
-SET_FLASH_IO_3                  =   IS_SET_FLASH_IO_3                   
-SET_FLASH_IO_4                  =   IS_SET_FLASH_IO_4                   
-FLASH_IO_PORT_MASK              =   IS_FLASH_IO_PORT_MASK             
+#SET_FLASH_OFF                   =   IS_SET_FLASH_OFF                    
+#SET_FLASH_ON                    =   IS_SET_FLASH_ON                     
+#SET_FLASH_LO_ACTIVE             =   IS_SET_FLASH_LO_ACTIVE          
+#SET_FLASH_HI_ACTIVE             =   IS_SET_FLASH_HI_ACTIVE              
+#SET_FLASH_HIGH                  =   IS_SET_FLASH_HIGH                   
+#SET_FLASH_LOW                   =   IS_SET_FLASH_LOW                    
+#SET_FLASH_LO_ACTIVE_FREERUN     =   IS_SET_FLASH_LO_ACTIVE_FREERUN      
+#SET_FLASH_HI_ACTIVE_FREERUN     =   IS_SET_FLASH_HI_ACTIVE_FREERUN      
+#SET_FLASH_IO_1                  =   IS_SET_FLASH_IO_1                   
+#SET_FLASH_IO_2                  =   IS_SET_FLASH_IO_2                   
+#SET_FLASH_IO_3                  =   IS_SET_FLASH_IO_3                   
+#SET_FLASH_IO_4                  =   IS_SET_FLASH_IO_4                   
+#FLASH_IO_PORT_MASK              =   IS_FLASH_IO_PORT_MASK             
 
-GET_FLASH_DELAY                 =   IS_GET_FLASH_DELAY                  
-GET_FLASH_DURATION              =   IS_GET_FLASH_DURATION               
-GET_MAX_FLASH_DELAY             =   IS_GET_MAX_FLASH_DELAY              
-GET_MAX_FLASH_DURATION          =   IS_GET_MAX_FLASH_DURATION           
-GET_MIN_FLASH_DELAY             =   IS_GET_MIN_FLASH_DELAY              
-GET_MIN_FLASH_DURATION          =   IS_GET_MIN_FLASH_DURATION           
-GET_FLASH_DELAY_GRANULARITY     =   IS_GET_FLASH_DELAY_GRANULARITY      
-GET_FLASH_DURATION_GRANULARITY  =   IS_GET_FLASH_DURATION_GRANULARITY   
+#GET_FLASH_DELAY                 =   IS_GET_FLASH_DELAY                  
+#GET_FLASH_DURATION              =   IS_GET_FLASH_DURATION               
+#GET_MAX_FLASH_DELAY             =   IS_GET_MAX_FLASH_DELAY              
+#GET_MAX_FLASH_DURATION          =   IS_GET_MAX_FLASH_DURATION           
+#GET_MIN_FLASH_DELAY             =   IS_GET_MIN_FLASH_DELAY              
+#GET_MIN_FLASH_DURATION          =   IS_GET_MIN_FLASH_DURATION           
+#GET_FLASH_DELAY_GRANULARITY     =   IS_GET_FLASH_DELAY_GRANULARITY      
+#GET_FLASH_DURATION_GRANULARITY  =   IS_GET_FLASH_DURATION_GRANULARITY   
 
 # ----------------------------------------------------------------------------
 # Digital IO constants
 # ----------------------------------------------------------------------------
-GET_IO                          =   IS_GET_IO                           
-GET_IO_MASK                     =   IS_GET_IO_MASK                      
-GET_INPUT_MASK                  =   IS_GET_INPUT_MASK                   
-GET_OUTPUT_MASK                 =   IS_GET_OUTPUT_MASK                  
-GET_SUPPORTED_IO_PORTS          =   IS_GET_SUPPORTED_IO_PORTS           
+#Not in 3.90
+#GET_IO                          =   IS_GET_IO                           
+#GET_IO_MASK                     =   IS_GET_IO_MASK                      
+#GET_INPUT_MASK                  =   IS_GET_INPUT_MASK                   
+#GET_OUTPUT_MASK                 =   IS_GET_OUTPUT_MASK                  
+#GET_SUPPORTED_IO_PORTS          =   IS_GET_SUPPORTED_IO_PORTS           
 
 
 # ----------------------------------------------------------------------------
@@ -994,30 +1016,32 @@ DISABLE_ERR_REP                 =   IS_DISABLE_ERR_REP
 # ----------------------------------------------------------------------------
 # display mode selectors
 # ----------------------------------------------------------------------------
+#Not in 3.90
 GET_DISPLAY_MODE                =   IS_GET_DISPLAY_MODE                 
-GET_DISPLAY_SIZE_X              =   IS_GET_DISPLAY_SIZE_X               
-GET_DISPLAY_SIZE_Y              =   IS_GET_DISPLAY_SIZE_Y               
-GET_DISPLAY_POS_X               =   IS_GET_DISPLAY_POS_X                
-GET_DISPLAY_POS_Y               =   IS_GET_DISPLAY_POS_Y                
+#GET_DISPLAY_SIZE_X              =   IS_GET_DISPLAY_SIZE_X               
+#GET_DISPLAY_SIZE_Y              =   IS_GET_DISPLAY_SIZE_Y               
+#GET_DISPLAY_POS_X               =   IS_GET_DISPLAY_POS_X                
+#GET_DISPLAY_POS_Y               =   IS_GET_DISPLAY_POS_Y                
 
 SET_DM_DIB                      =   IS_SET_DM_DIB                       
-SET_DM_DIRECTDRAW               =   IS_SET_DM_DIRECTDRAW                
+#SET_DM_DIRECTDRAW               =   IS_SET_DM_DIRECTDRAW                
 SET_DM_DIRECT3D                 =   IS_SET_DM_DIRECT3D                  
-SET_DM_ALLOW_SYSMEM             =   IS_SET_DM_ALLOW_SYSMEM              
-SET_DM_ALLOW_PRIMARY            =   IS_SET_DM_ALLOW_PRIMARY             
+#SET_DM_ALLOW_SYSMEM             =   IS_SET_DM_ALLOW_SYSMEM              
+#SET_DM_ALLOW_PRIMARY            =   IS_SET_DM_ALLOW_PRIMARY             
 
 # -- overlay display mode ---
-GET_DD_OVERLAY_SCALE            =   IS_GET_DD_OVERLAY_SCALE             
+#GET_DD_OVERLAY_SCALE            =   IS_GET_DD_OVERLAY_SCALE             
 
-SET_DM_ALLOW_OVERLAY            =   IS_SET_DM_ALLOW_OVERLAY             
-SET_DM_ALLOW_SCALING            =   IS_SET_DM_ALLOW_SCALING             
-SET_DM_ALLOW_FIELDSKIP          =   IS_SET_DM_ALLOW_FIELDSKIP           
+#SET_DM_ALLOW_OVERLAY            =   IS_SET_DM_ALLOW_OVERLAY             
+#SET_DM_ALLOW_SCALING            =   IS_SET_DM_ALLOW_SCALING             
+#SET_DM_ALLOW_FIELDSKIP          =   IS_SET_DM_ALLOW_FIELDSKIP           
 SET_DM_MONO                     =   IS_SET_DM_MONO                      
 SET_DM_BAYER                    =   IS_SET_DM_BAYER                     
 SET_DM_YCBCR                    =   IS_SET_DM_YCBCR                     
 
 # -- backbuffer display mode ---
-SET_DM_BACKBUFFER               =   IS_SET_DM_BACKBUFFER                
+#Not in 3.90
+#SET_DM_BACKBUFFER               =   IS_SET_DM_BACKBUFFER                
 
 
 # ----------------------------------------------------------------------------
@@ -1053,47 +1077,48 @@ GET_OVERLAY_SIZE                =   DR_GET_OVERLAY_SIZE
 # ----------------------------------------------------------------------------
 # DirectDraw keying color constants
 # ----------------------------------------------------------------------------
-GET_KC_RED                      =   IS_GET_KC_RED                       
-GET_KC_GREEN                    =   IS_GET_KC_GREEN                     
-GET_KC_BLUE                     =   IS_GET_KC_BLUE                      
-GET_KC_RGB                      =   IS_GET_KC_RGB                       
-GET_KC_INDEX                    =   IS_GET_KC_INDEX                     
-GET_KEYOFFSET_X                 =   IS_GET_KEYOFFSET_X                  
-GET_KEYOFFSET_Y                 =   IS_GET_KEYOFFSET_Y                  
+#Not in 3.90
+#GET_KC_RED                      =   IS_GET_KC_RED                       
+#GET_KC_GREEN                    =   IS_GET_KC_GREEN                     
+#GET_KC_BLUE                     =   IS_GET_KC_BLUE                      
+#GET_KC_RGB                      =   IS_GET_KC_RGB                       
+#GET_KC_INDEX                    =   IS_GET_KC_INDEX                     
+#GET_KEYOFFSET_X                 =   IS_GET_KEYOFFSET_X                  
+#GET_KEYOFFSET_Y                 =   IS_GET_KEYOFFSET_Y                  
 
 # RGB-triple for default key-color in 15,16,24,32 bit mode
-SET_KC_DEFAULT                  =   IS_SET_KC_DEFAULT                      # 0xbbggrr
+#SET_KC_DEFAULT                  =   IS_SET_KC_DEFAULT                      # 0xbbggrr
 # color index for default key-color in 8bit palette mode
-SET_KC_DEFAULT_8                =   IS_SET_KC_DEFAULT_8                 
+#SET_KC_DEFAULT_8                =   IS_SET_KC_DEFAULT_8                 
 
 
 # ----------------------------------------------------------------------------
 # Memoryboard
 # ----------------------------------------------------------------------------
-MEMORY_GET_COUNT                =   IS_MEMORY_GET_COUNT                 
-MEMORY_GET_DELAY                =   IS_MEMORY_GET_DELAY                 
-MEMORY_MODE_DISABLE             =   IS_MEMORY_MODE_DISABLE              
-MEMORY_USE_TRIGGER              =   IS_MEMORY_USE_TRIGGER               
+#MEMORY_GET_COUNT                =   IS_MEMORY_GET_COUNT                 
+#MEMORY_GET_DELAY                =   IS_MEMORY_GET_DELAY                 
+#MEMORY_MODE_DISABLE             =   IS_MEMORY_MODE_DISABLE              
+#MEMORY_USE_TRIGGER              =   IS_MEMORY_USE_TRIGGER               
 
 
 # ----------------------------------------------------------------------------
 # Test image modes
 # ----------------------------------------------------------------------------
-GET_TEST_IMAGE                  =   IS_GET_TEST_IMAGE                   
+#GET_TEST_IMAGE                  =   IS_GET_TEST_IMAGE                   
 
-SET_TEST_IMAGE_DISABLED         =   IS_SET_TEST_IMAGE_DISABLED          
-SET_TEST_IMAGE_MEMORY_1         =   IS_SET_TEST_IMAGE_MEMORY_1          
-SET_TEST_IMAGE_MEMORY_2         =   IS_SET_TEST_IMAGE_MEMORY_2          
-SET_TEST_IMAGE_MEMORY_3         =   IS_SET_TEST_IMAGE_MEMORY_3          
+#SET_TEST_IMAGE_DISABLED         =   IS_SET_TEST_IMAGE_DISABLED          
+#SET_TEST_IMAGE_MEMORY_1         =   IS_SET_TEST_IMAGE_MEMORY_1          
+#SET_TEST_IMAGE_MEMORY_2         =   IS_SET_TEST_IMAGE_MEMORY_2          
+#SET_TEST_IMAGE_MEMORY_3         =   IS_SET_TEST_IMAGE_MEMORY_3          
 
 
 # ----------------------------------------------------------------------------
 # Led settings
 # ----------------------------------------------------------------------------
-SET_LED_OFF                     =   IS_SET_LED_OFF                      
-SET_LED_ON                      =   IS_SET_LED_ON                       
-SET_LED_TOGGLE                  =   IS_SET_LED_TOGGLE                   
-GET_LED                         =   IS_GET_LED                          
+#SET_LED_OFF                     =   IS_SET_LED_OFF                      
+#SET_LED_ON                      =   IS_SET_LED_ON                       
+#SET_LED_TOGGLE                  =   IS_SET_LED_TOGGLE                   
+#GET_LED                         =   IS_GET_LED                          
 
 
 # ----------------------------------------------------------------------------
@@ -1118,7 +1143,7 @@ SET_EVENT_VSYNC                 =   IS_SET_EVENT_VSYNC
 SET_EVENT_SEQ                   =   IS_SET_EVENT_SEQ                    
 SET_EVENT_STEAL                 =   IS_SET_EVENT_STEAL                  
 SET_EVENT_VPRES                 =   IS_SET_EVENT_VPRES                  
-SET_EVENT_TRANSFER_FAILED       =   IS_SET_EVENT_TRANSFER_FAILED        
+#SET_EVENT_TRANSFER_FAILED       =   IS_SET_EVENT_TRANSFER_FAILED        
 SET_EVENT_DEVICE_RECONNECTED    =   IS_SET_EVENT_DEVICE_RECONNECTED     
 SET_EVENT_MEMORY_MODE_FINISH    =   IS_SET_EVENT_MEMORY_MODE_FINISH     
 SET_EVENT_FRAME_RECEIVED        =   IS_SET_EVENT_FRAME_RECEIVED         
@@ -1138,7 +1163,7 @@ UEYE_MESSAGE                    =   IS_UEYE_MESSAGE
 FRAME                           =   IS_FRAME                          
 SEQUENCE                        =   IS_SEQUENCE                       
 TRIGGER                         =   IS_TRIGGER                        
-TRANSFER_FAILED                 =   IS_TRANSFER_FAILED                
+#TRANSFER_FAILED                 =   IS_TRANSFER_FAILED                
 DEVICE_RECONNECTED              =   IS_DEVICE_RECONNECTED             
 MEMORY_MODE_FINISH              =   IS_MEMORY_MODE_FINISH             
 FRAME_RECEIVED                  =   IS_FRAME_RECEIVED                 
@@ -1201,14 +1226,14 @@ INTERFACE_TYPE_ETH              =   IS_INTERFACE_TYPE_ETH
 # ----------------------------------------------------------------------------
 # board type defines
 # ----------------------------------------------------------------------------
-BOARD_TYPE_FALCON               =   IS_BOARD_TYPE_FALCON                
-BOARD_TYPE_EAGLE                =   IS_BOARD_TYPE_EAGLE                 
-BOARD_TYPE_FALCON2              =   IS_BOARD_TYPE_FALCON2               
-BOARD_TYPE_FALCON_PLUS          =   IS_BOARD_TYPE_FALCON_PLUS           
-BOARD_TYPE_FALCON_QUATTRO       =   IS_BOARD_TYPE_FALCON_QUATTRO        
-BOARD_TYPE_FALCON_DUO           =   IS_BOARD_TYPE_FALCON_DUO            
-BOARD_TYPE_EAGLE_QUATTRO        =   IS_BOARD_TYPE_EAGLE_QUATTRO         
-BOARD_TYPE_EAGLE_DUO            =   IS_BOARD_TYPE_EAGLE_DUO             
+#BOARD_TYPE_FALCON               =   IS_BOARD_TYPE_FALCON                
+#BOARD_TYPE_EAGLE                =   IS_BOARD_TYPE_EAGLE                 
+#BOARD_TYPE_FALCON2              =   IS_BOARD_TYPE_FALCON2               
+#BOARD_TYPE_FALCON_PLUS          =   IS_BOARD_TYPE_FALCON_PLUS           
+#BOARD_TYPE_FALCON_QUATTRO       =   IS_BOARD_TYPE_FALCON_QUATTRO        
+#BOARD_TYPE_FALCON_DUO           =   IS_BOARD_TYPE_FALCON_DUO            
+#BOARD_TYPE_EAGLE_QUATTRO        =   IS_BOARD_TYPE_EAGLE_QUATTRO         
+#BOARD_TYPE_EAGLE_DUO            =   IS_BOARD_TYPE_EAGLE_DUO             
 BOARD_TYPE_UEYE_USB             =   IS_BOARD_TYPE_UEYE_USB                   # 0x40
 BOARD_TYPE_UEYE_USB_SE          =   IS_BOARD_TYPE_UEYE_USB_SE                     # 0x40
 BOARD_TYPE_UEYE_USB_RE          =   IS_BOARD_TYPE_UEYE_USB_RE                     # 0x40
@@ -1362,22 +1387,22 @@ I2C_16_BIT_REGISTER             =   IS_I2C_16_BIT_REGISTER
 # ----------------------------------------------------------------------------
 # DirectDraw steal video constants   (Falcon)
 # ----------------------------------------------------------------------------
-INIT_STEAL_VIDEO                =   IS_INIT_STEAL_VIDEO                 
-EXIT_STEAL_VIDEO                =   IS_EXIT_STEAL_VIDEO                 
-INIT_STEAL_VIDEO_MANUAL         =   IS_INIT_STEAL_VIDEO_MANUAL          
-INIT_STEAL_VIDEO_AUTO           =   IS_INIT_STEAL_VIDEO_AUTO            
-SET_STEAL_RATIO                 =   IS_SET_STEAL_RATIO                  
-USE_MEM_IMAGE_SIZE              =   IS_USE_MEM_IMAGE_SIZE               
-STEAL_MODES_MASK                =   IS_STEAL_MODES_MASK                 
-SET_STEAL_COPY                  =   IS_SET_STEAL_COPY                   
-SET_STEAL_NORMAL                =   IS_SET_STEAL_NORMAL                 
+#INIT_STEAL_VIDEO                =   IS_INIT_STEAL_VIDEO                 
+#EXIT_STEAL_VIDEO                =   IS_EXIT_STEAL_VIDEO                 
+#INIT_STEAL_VIDEO_MANUAL         =   IS_INIT_STEAL_VIDEO_MANUAL          
+#INIT_STEAL_VIDEO_AUTO           =   IS_INIT_STEAL_VIDEO_AUTO            
+#SET_STEAL_RATIO                 =   IS_SET_STEAL_RATIO                  
+#USE_MEM_IMAGE_SIZE              =   IS_USE_MEM_IMAGE_SIZE               
+#STEAL_MODES_MASK                =   IS_STEAL_MODES_MASK                 
+#SET_STEAL_COPY                  =   IS_SET_STEAL_COPY                   
+#SET_STEAL_NORMAL                =   IS_SET_STEAL_NORMAL                 
 
 # ----------------------------------------------------------------------------
 # AGC modes   (Falcon)
 # ----------------------------------------------------------------------------
-GET_AGC_MODE                    =   IS_GET_AGC_MODE                     
-SET_AGC_OFF                     =   IS_SET_AGC_OFF                      
-SET_AGC_ON                      =   IS_SET_AGC_ON                       
+#GET_AGC_MODE                    =   IS_GET_AGC_MODE                     
+#SET_AGC_OFF                     =   IS_SET_AGC_OFF                      
+#SET_AGC_ON                      =   IS_SET_AGC_ON                       
 
 
 # ----------------------------------------------------------------------------
@@ -1391,175 +1416,175 @@ SET_GAMMA_ON                    =   IS_SET_GAMMA_ON
 # ----------------------------------------------------------------------------
 # sync levels   (Falcon)
 # ----------------------------------------------------------------------------
-GET_SYNC_LEVEL                  =   IS_GET_SYNC_LEVEL                   
-SET_SYNC_75                     =   IS_SET_SYNC_75                      
-SET_SYNC_125                    =   IS_SET_SYNC_125                     
+#GET_SYNC_LEVEL                  =   IS_GET_SYNC_LEVEL                   
+#SET_SYNC_75                     =   IS_SET_SYNC_75                      
+#SET_SYNC_125                    =   IS_SET_SYNC_125                     
 
 
 # ----------------------------------------------------------------------------
 # color bar modes   (Falcon)
 # ----------------------------------------------------------------------------
-GET_CBARS_MODE                  =   IS_GET_CBARS_MODE                   
-SET_CBARS_OFF                   =   IS_SET_CBARS_OFF                    
-SET_CBARS_ON                    =   IS_SET_CBARS_ON                     
+#GET_CBARS_MODE                  =   IS_GET_CBARS_MODE                   
+#SET_CBARS_OFF                   =   IS_SET_CBARS_OFF                    
+#SET_CBARS_ON                    =   IS_SET_CBARS_ON                     
 
 
 # ----------------------------------------------------------------------------
 # horizontal filter defines   (Falcon)
 # ----------------------------------------------------------------------------
-GET_HOR_FILTER_MODE             =   IS_GET_HOR_FILTER_MODE              
-GET_HOR_FILTER_STEP             =   IS_GET_HOR_FILTER_STEP              
+#GET_HOR_FILTER_MODE             =   IS_GET_HOR_FILTER_MODE              
+#GET_HOR_FILTER_STEP             =   IS_GET_HOR_FILTER_STEP              
 
-DISABLE_HOR_FILTER              =   IS_DISABLE_HOR_FILTER               
-ENABLE_HOR_FILTER               =   IS_ENABLE_HOR_FILTER                
+#DISABLE_HOR_FILTER              =   IS_DISABLE_HOR_FILTER               
+#ENABLE_HOR_FILTER               =   IS_ENABLE_HOR_FILTER                
         #int IS_HOR_FILTER_STEP(_s_)         ((_s_ + 1) << 1)
-HOR_FILTER_STEP1                =   IS_HOR_FILTER_STEP1                 
-HOR_FILTER_STEP2                =   IS_HOR_FILTER_STEP2                 
-HOR_FILTER_STEP3                =   IS_HOR_FILTER_STEP3                 
+#HOR_FILTER_STEP1                =   IS_HOR_FILTER_STEP1                 
+#HOR_FILTER_STEP2                =   IS_HOR_FILTER_STEP2                 
+#HOR_FILTER_STEP3                =   IS_HOR_FILTER_STEP3                 
 
 
 # ----------------------------------------------------------------------------
 # vertical filter defines   (Falcon)
 # ----------------------------------------------------------------------------
-GET_VERT_FILTER_MODE            =   IS_GET_VERT_FILTER_MODE             
-GET_VERT_FILTER_STEP            =   IS_GET_VERT_FILTER_STEP             
+#GET_VERT_FILTER_MODE            =   IS_GET_VERT_FILTER_MODE             
+#GET_VERT_FILTER_STEP            =   IS_GET_VERT_FILTER_STEP             
 
-DISABLE_VERT_FILTER             =   IS_DISABLE_VERT_FILTER              
-ENABLE_VERT_FILTER              =   IS_ENABLE_VERT_FILTER               
+#DISABLE_VERT_FILTER             =   IS_DISABLE_VERT_FILTER              
+#ENABLE_VERT_FILTER              =   IS_ENABLE_VERT_FILTER               
         #int IS_VERT_FILTER_STEP(_s_)        ((_s_ + 1) << 1)
-VERT_FILTER_STEP1               =   IS_VERT_FILTER_STEP1                
-VERT_FILTER_STEP2               =   IS_VERT_FILTER_STEP2                
-VERT_FILTER_STEP3               =   IS_VERT_FILTER_STEP3                
+#VERT_FILTER_STEP1               =   IS_VERT_FILTER_STEP1                
+#VERT_FILTER_STEP2               =   IS_VERT_FILTER_STEP2                
+#VERT_FILTER_STEP3               =   IS_VERT_FILTER_STEP3                
 
 
 # ----------------------------------------------------------------------------
 # scaler modes   (Falcon)
 # ----------------------------------------------------------------------------
-GET_SCALER_MODE                 =   IS_GET_SCALER_MODE          
-SET_SCALER_OFF                  =   IS_SET_SCALER_OFF           
-SET_SCALER_ON                   =   IS_SET_SCALER_ON            
+#GET_SCALER_MODE                 =   IS_GET_SCALER_MODE          
+#SET_SCALER_OFF                  =   IS_SET_SCALER_OFF           
+#SET_SCALER_ON                   =   IS_SET_SCALER_ON            
 
-MIN_SCALE_X                     =   IS_MIN_SCALE_X              
-MAX_SCALE_X                     =   IS_MAX_SCALE_X              
-MIN_SCALE_Y                     =   IS_MIN_SCALE_Y              
-MAX_SCALE_Y                     =   IS_MAX_SCALE_Y              
+#MIN_SCALE_X                     =   IS_MIN_SCALE_X              
+#MAX_SCALE_X                     =   IS_MAX_SCALE_X              
+#MIN_SCALE_Y                     =   IS_MIN_SCALE_Y              
+#MAX_SCALE_Y                     =   IS_MAX_SCALE_Y              
 
 
 # ----------------------------------------------------------------------------
 # video source selectors   (Falcon)
 # ----------------------------------------------------------------------------
-GET_VIDEO_IN                    =   IS_GET_VIDEO_IN                     
-GET_VIDEO_PASSTHROUGH           =   IS_GET_VIDEO_PASSTHROUGH            
-GET_VIDEO_IN_TOGGLE             =   IS_GET_VIDEO_IN_TOGGLE              
-GET_TOGGLE_INPUT_1              =   IS_GET_TOGGLE_INPUT_1               
-GET_TOGGLE_INPUT_2              =   IS_GET_TOGGLE_INPUT_2               
-GET_TOGGLE_INPUT_3              =   IS_GET_TOGGLE_INPUT_3               
-GET_TOGGLE_INPUT_4              =   IS_GET_TOGGLE_INPUT_4               
+#GET_VIDEO_IN                    =   IS_GET_VIDEO_IN                     
+#GET_VIDEO_PASSTHROUGH           =   IS_GET_VIDEO_PASSTHROUGH            
+#GET_VIDEO_IN_TOGGLE             =   IS_GET_VIDEO_IN_TOGGLE              
+#GET_TOGGLE_INPUT_1              =   IS_GET_TOGGLE_INPUT_1               
+#GET_TOGGLE_INPUT_2              =   IS_GET_TOGGLE_INPUT_2               
+#GET_TOGGLE_INPUT_3              =   IS_GET_TOGGLE_INPUT_3               
+#GET_TOGGLE_INPUT_4              =   IS_GET_TOGGLE_INPUT_4               
 
-SET_VIDEO_IN_1                  =   IS_SET_VIDEO_IN_1                   
-SET_VIDEO_IN_2                  =   IS_SET_VIDEO_IN_2                   
-SET_VIDEO_IN_S                  =   IS_SET_VIDEO_IN_S                   
-SET_VIDEO_IN_3                  =   IS_SET_VIDEO_IN_3                   
-SET_VIDEO_IN_4                  =   IS_SET_VIDEO_IN_4                   
-SET_VIDEO_IN_1S                 =   IS_SET_VIDEO_IN_1S                  
-SET_VIDEO_IN_2S                 =   IS_SET_VIDEO_IN_2S                  
-SET_VIDEO_IN_3S                 =   IS_SET_VIDEO_IN_3S                  
-SET_VIDEO_IN_4S                 =   IS_SET_VIDEO_IN_4S                  
-SET_VIDEO_IN_EXT                =   IS_SET_VIDEO_IN_EXT                 
-SET_TOGGLE_OFF                  =   IS_SET_TOGGLE_OFF                   
-SET_VIDEO_IN_SYNC               =   IS_SET_VIDEO_IN_SYNC                
+#SET_VIDEO_IN_1                  =   IS_SET_VIDEO_IN_1                   
+#SET_VIDEO_IN_2                  =   IS_SET_VIDEO_IN_2                   
+#SET_VIDEO_IN_S                  =   IS_SET_VIDEO_IN_S                   
+#SET_VIDEO_IN_3                  =   IS_SET_VIDEO_IN_3                   
+#SET_VIDEO_IN_4                  =   IS_SET_VIDEO_IN_4                   
+#SET_VIDEO_IN_1S                 =   IS_SET_VIDEO_IN_1S                  
+#SET_VIDEO_IN_2S                 =   IS_SET_VIDEO_IN_2S                  
+#SET_VIDEO_IN_3S                 =   IS_SET_VIDEO_IN_3S                  
+#SET_VIDEO_IN_4S                 =   IS_SET_VIDEO_IN_4S                  
+#SET_VIDEO_IN_EXT                =   IS_SET_VIDEO_IN_EXT                 
+#SET_TOGGLE_OFF                  =   IS_SET_TOGGLE_OFF                   
+#SET_VIDEO_IN_SYNC               =   IS_SET_VIDEO_IN_SYNC                
 
 
 # ----------------------------------------------------------------------------
 # video crossbar selectors   (Falcon)
 # ----------------------------------------------------------------------------
-GET_CROSSBAR                    =   IS_GET_CROSSBAR                     
+#GET_CROSSBAR                    =   IS_GET_CROSSBAR                     
 
-CROSSBAR_1                      =   IS_CROSSBAR_1                       
-CROSSBAR_2                      =   IS_CROSSBAR_2                       
-CROSSBAR_3                      =   IS_CROSSBAR_3                       
-CROSSBAR_4                      =   IS_CROSSBAR_4                       
-CROSSBAR_5                      =   IS_CROSSBAR_5                       
-CROSSBAR_6                      =   IS_CROSSBAR_6                       
-CROSSBAR_7                      =   IS_CROSSBAR_7                       
-CROSSBAR_8                      =   IS_CROSSBAR_8                       
-CROSSBAR_9                      =   IS_CROSSBAR_9                       
-CROSSBAR_10                     =   IS_CROSSBAR_10                      
-CROSSBAR_11                     =   IS_CROSSBAR_11                      
-CROSSBAR_12                     =   IS_CROSSBAR_12                      
-CROSSBAR_13                     =   IS_CROSSBAR_13                      
-CROSSBAR_14                     =   IS_CROSSBAR_14                      
-CROSSBAR_15                     =   IS_CROSSBAR_15                      
-CROSSBAR_16                     =   IS_CROSSBAR_16                      
-SELECT_AS_INPUT                 =   IS_SELECT_AS_INPUT                  
+#CROSSBAR_1                      =   IS_CROSSBAR_1                       
+#CROSSBAR_2                      =   IS_CROSSBAR_2                       
+#CROSSBAR_3                      =   IS_CROSSBAR_3                       
+#CROSSBAR_4                      =   IS_CROSSBAR_4                       
+#CROSSBAR_5                      =   IS_CROSSBAR_5                       
+#CROSSBAR_6                      =   IS_CROSSBAR_6                       
+#CROSSBAR_7                      =   IS_CROSSBAR_7                       
+#CROSSBAR_8                      =   IS_CROSSBAR_8                       
+#CROSSBAR_9                      =   IS_CROSSBAR_9                       
+#CROSSBAR_10                     =   IS_CROSSBAR_10                      
+#CROSSBAR_11                     =   IS_CROSSBAR_11                      
+#CROSSBAR_12                     =   IS_CROSSBAR_12                      
+#CROSSBAR_13                     =   IS_CROSSBAR_13                      
+#CROSSBAR_14                     =   IS_CROSSBAR_14                      
+#CROSSBAR_15                     =   IS_CROSSBAR_15                      
+#CROSSBAR_16                     =   IS_CROSSBAR_16                      
+#SELECT_AS_INPUT                 =   IS_SELECT_AS_INPUT                  
 
 
 # ----------------------------------------------------------------------------
 # video format selectors   (Falcon)
 # ----------------------------------------------------------------------------
-GET_VIDEO_MODE                  =   IS_GET_VIDEO_MODE                   
-
-SET_VM_PAL                      =   IS_SET_VM_PAL                       
-SET_VM_NTSC                     =   IS_SET_VM_NTSC                      
-SET_VM_SECAM                    =   IS_SET_VM_SECAM                     
-SET_VM_AUTO                     =   IS_SET_VM_AUTO                      
+#~ GET_VIDEO_MODE                  =   IS_GET_VIDEO_MODE                   
+#~ 
+#~ SET_VM_PAL                      =   IS_SET_VM_PAL                       
+#~ SET_VM_NTSC                     =   IS_SET_VM_NTSC                      
+#~ SET_VM_SECAM                    =   IS_SET_VM_SECAM                     
+#~ SET_VM_AUTO                     =   IS_SET_VM_AUTO                      
 
 
 # ----------------------------------------------------------------------------
 # capture modes   (Falcon)
 # ----------------------------------------------------------------------------
-GET_CAPTURE_MODE                =   IS_GET_CAPTURE_MODE                 
-
-SET_CM_ODD                      =   IS_SET_CM_ODD                       
-SET_CM_EVEN                     =   IS_SET_CM_EVEN                      
-SET_CM_FRAME                    =   IS_SET_CM_FRAME                     
-SET_CM_NONINTERLACED            =   IS_SET_CM_NONINTERLACED             
-SET_CM_NEXT_FRAME               =   IS_SET_CM_NEXT_FRAME                
-SET_CM_NEXT_FIELD               =   IS_SET_CM_NEXT_FIELD                
-SET_CM_BOTHFIELDS               =   IS_SET_CM_BOTHFIELDS            
-SET_CM_FRAME_STEREO             =   IS_SET_CM_FRAME_STEREO              
+#~ GET_CAPTURE_MODE                =   IS_GET_CAPTURE_MODE                 
+#~ 
+#~ SET_CM_ODD                      =   IS_SET_CM_ODD                       
+#~ SET_CM_EVEN                     =   IS_SET_CM_EVEN                      
+#~ SET_CM_FRAME                    =   IS_SET_CM_FRAME                     
+#~ SET_CM_NONINTERLACED            =   IS_SET_CM_NONINTERLACED             
+#~ SET_CM_NEXT_FRAME               =   IS_SET_CM_NEXT_FRAME                
+#~ SET_CM_NEXT_FIELD               =   IS_SET_CM_NEXT_FIELD                
+#~ SET_CM_BOTHFIELDS               =   IS_SET_CM_BOTHFIELDS            
+#~ SET_CM_FRAME_STEREO             =   IS_SET_CM_FRAME_STEREO              
 
 
 # ----------------------------------------------------------------------------
 # display update mode constants   (Falcon)
 # ----------------------------------------------------------------------------
-GET_UPDATE_MODE                 =   IS_GET_UPDATE_MODE                  
-SET_UPDATE_TIMER                =   IS_SET_UPDATE_TIMER                 
-SET_UPDATE_EVENT                =   IS_SET_UPDATE_EVENT                 
-
+#~ GET_UPDATE_MODE                 =   IS_GET_UPDATE_MODE                  
+#~ SET_UPDATE_TIMER                =   IS_SET_UPDATE_TIMER                 
+#~ SET_UPDATE_EVENT                =   IS_SET_UPDATE_EVENT                 
+#~ 
 
 # ----------------------------------------------------------------------------
 # sync generator mode constants   (Falcon)
 # ----------------------------------------------------------------------------
-GET_SYNC_GEN                    =   IS_GET_SYNC_GEN                     
-SET_SYNC_GEN_OFF                =   IS_SET_SYNC_GEN_OFF                 
-SET_SYNC_GEN_ON                 =   IS_SET_SYNC_GEN_ON                  
+#~ GET_SYNC_GEN                    =   IS_GET_SYNC_GEN                     
+#~ SET_SYNC_GEN_OFF                =   IS_SET_SYNC_GEN_OFF                 
+#~ SET_SYNC_GEN_ON                 =   IS_SET_SYNC_GEN_ON                  
 
 
 # ----------------------------------------------------------------------------
 # decimation modes   (Falcon)
 # ----------------------------------------------------------------------------
-GET_DECIMATION_MODE             =   IS_GET_DECIMATION_MODE              
-GET_DECIMATION_NUMBER           =   IS_GET_DECIMATION_NUMBER            
-
-DECIMATION_OFF                  =   IS_DECIMATION_OFF                   
-DECIMATION_CONSECUTIVE          =   IS_DECIMATION_CONSECUTIVE           
-DECIMATION_DISTRIBUTED          =   IS_DECIMATION_DISTRIBUTED           
+#~ GET_DECIMATION_MODE             =   IS_GET_DECIMATION_MODE              
+#~ GET_DECIMATION_NUMBER           =   IS_GET_DECIMATION_NUMBER            
+#~ 
+#~ DECIMATION_OFF                  =   IS_DECIMATION_OFF                   
+#~ DECIMATION_CONSECUTIVE          =   IS_DECIMATION_CONSECUTIVE           
+#~ DECIMATION_DISTRIBUTED          =   IS_DECIMATION_DISTRIBUTED           
 
 
 # ----------------------------------------------------------------------------
 # hardware watchdog defines   (Falcon)
 # ----------------------------------------------------------------------------
-GET_WATCHDOG_TIME               =   IS_GET_WATCHDOG_TIME                
-GET_WATCHDOG_RESOLUTION         =   IS_GET_WATCHDOG_RESOLUTION          
-GET_WATCHDOG_ENABLE             =   IS_GET_WATCHDOG_ENABLE              
-
-WATCHDOG_MINUTES                =   IS_WATCHDOG_MINUTES                 
-WATCHDOG_SECONDS                =   IS_WATCHDOG_SECONDS                 
-DISABLE_WATCHDOG                =   IS_DISABLE_WATCHDOG                 
-ENABLE_WATCHDOG                 =   IS_ENABLE_WATCHDOG                  
-RETRIGGER_WATCHDOG              =   IS_RETRIGGER_WATCHDOG               
-ENABLE_AUTO_DEACTIVATION        =   IS_ENABLE_AUTO_DEACTIVATION         
-DISABLE_AUTO_DEACTIVATION       =   IS_DISABLE_AUTO_DEACTIVATION        
-WATCHDOG_RESERVED               =   IS_WATCHDOG_RESERVED                
+#~ GET_WATCHDOG_TIME               =   IS_GET_WATCHDOG_TIME                
+#~ GET_WATCHDOG_RESOLUTION         =   IS_GET_WATCHDOG_RESOLUTION          
+#~ GET_WATCHDOG_ENABLE             =   IS_GET_WATCHDOG_ENABLE              
+#~ 
+#~ WATCHDOG_MINUTES                =   IS_WATCHDOG_MINUTES                 
+#~ WATCHDOG_SECONDS                =   IS_WATCHDOG_SECONDS                 
+#~ DISABLE_WATCHDOG                =   IS_DISABLE_WATCHDOG                 
+#~ ENABLE_WATCHDOG                 =   IS_ENABLE_WATCHDOG                  
+#~ RETRIGGER_WATCHDOG              =   IS_RETRIGGER_WATCHDOG               
+#~ ENABLE_AUTO_DEACTIVATION        =   IS_ENABLE_AUTO_DEACTIVATION         
+#~ DISABLE_AUTO_DEACTIVATION       =   IS_DISABLE_AUTO_DEACTIVATION        
+#~ WATCHDOG_RESERVED               =   IS_WATCHDOG_RESERVED                
 

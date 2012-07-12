@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 
-# Copyright (c) 2010, Combustión Ingenieros Ltda.
+# Copyright (c) 2010, Combustion Ingenieros Ltda.
 # All rights reserved.
 #       Redistribution and use in source and binary forms, with or without
 #       modification, are permitted provided that the following conditions are
@@ -29,6 +29,6 @@
 #       (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #       OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-# Author: Ricardo Amézquita Orozco <ramezquitao@cihologramas.com>
+# Author: Ricardo Amezquita Orozco <ramezquitao@cihologramas.com>
 
 from ueye import *

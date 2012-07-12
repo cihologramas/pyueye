@@ -1,4 +1,4 @@
-# Copyright (c) 2010, Combustión Ingenieros Ltda.
+# Copyright (c) 2010, Combustion Ingenieros Ltda.
 # All rights reserved.
 #       Redistribution and use in source and binary forms, with or without
 #       modification, are permitted provided that the following conditions are
@@ -26,7 +26,7 @@
 #       (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #       OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-# Author: Ricardo Amézquita Orozco <ramezquitao@cihologramas.com>
+# Author: Ricardo Amezquita Orozco <ramezquitao@cihologramas.com>
 
 # This file was created initially using the information found in:
 #*****************************************************************************
@@ -100,7 +100,7 @@ ctypedef DWORD   HFALC
 
 
 
-cdef extern from "uEye.h":
+cdef extern from "ueye.h":
 
 # ----------------------------------------------------------------------------
 #Version Definition
@@ -938,9 +938,10 @@ cdef extern from "uEye.h":
         int IS_BPC_ENABLE_SOFTWARE          
         int IS_BPC_ENABLE_HARDWARE          
 
-        int IS_SET_BADPIXEL_LIST                 
-        int IS_GET_BADPIXEL_LIST                 
-        int IS_GET_LIST_SIZE                     
+#The following constants where removed in the 3.9 drivers
+#        int IS_SET_BADPIXEL_LIST                 
+#        int IS_GET_BADPIXEL_LIST                 
+#        int IS_GET_LIST_SIZE                     
 
 
 # ----------------------------------------------------------------------------
