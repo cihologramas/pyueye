@@ -234,7 +234,7 @@ cdef class Cam:
         self.CheckNoSuccess(rv)            
        
     
-    def GrabImage(self):
+    def GrabImage(self, BGR=False):
         '''Grabs and reads an image from the camera and returns a numpy array
         
         
@@ -251,8 +251,8 @@ cdef class Cam:
             to the numpy array. The returned numpy array is modified each time 
             the method is called. 
             
-        Note: The default colormode for color cameras is BGR, so the imshow in numpy
-        is not showing the correct colors
+        Note: The default colormode for OpenCV is BGR, so it should be called with
+              BGR=True. Default value is False only for backwards-compatibility.
 
 
         '''
@@ -268,7 +268,7 @@ cdef class Cam:
             dims3[2]=3
             npy.Py_INCREF( npy.NPY_UINT8 )
             data = npy.PyArray_SimpleNewFromData(3, dims3, npy.NPY_UINT8, self.Img)
-            if self.colormode==IS_CM_BGR8_PACKED:
+            if BGR != (self.colormode == IS_CM_BGR8_PACKED):
                 data=data[:,:,::-1]
         
         elif self.colormode==IS_CM_MONO8:
