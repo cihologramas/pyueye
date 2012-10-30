@@ -151,14 +151,18 @@ cdef class Cam:
     cam:
         Instance to the Cam class assigned to the requested cam.
     '''
-    cdef char *Img
+    cdef char **Imgs
+    cdef int BufCount
+    cdef int *BufIds
+    cdef char *LastSeqBuf
     cdef public HIDS cid
-    cdef public object SerNo,ID,Version,Date,Select,SensorID,strSensorName,nColorMode,nMaxWidth,nMaxHeight,bMasterGain, bRGain, bGGain, bBGain, bGlobShutter, \
-                        bitspixel, colormode
+    cdef public object SerNo,ID,Version,Date,Select,SensorID,strSensorName, \
+            nColorMode,nMaxWidth,nMaxHeight,bMasterGain, bRGain, bGGain, bBGain, \
+            bGlobShutter, bitspixel, colormode
     cdef public INT LineInc, 
     cdef public int ImgMemId
         
-    def __init__(self,HIDS cid=0):
+    def __init__(self, HIDS cid=0, int bufCount=3):
         #cdef HWND hWnd
         rv=is_InitCamera(&cid, NULL)
         #IS_SUCCESS
@@ -207,7 +211,10 @@ cdef class Cam:
         
         #Set colormode and assign image memory. The image memory assigment is done 
         #in SetColorMode
-        self.Img=<char *>NULL
+        #self.Img=<char *>NULL
+        self.BufCount = bufCount
+        self.BufIds = <int *>calloc(bufCount, sizeof(int))
+        self.Imgs = <char **>calloc(bufCount, sizeof(char*))
         self.SetColorMode (colormode)    
         
         
@@ -227,25 +234,45 @@ cdef class Cam:
 
     def __dealloc__(self):
         
-        rv=is_FreeImageMem (self.cid,self.Img, self.ImgMemId)
-        self.CheckNoSuccess(rv)
+        for i in range(self.BufCount):
+            rv=is_FreeImageMem (self.cid, self.Imgs[i], self.BufIds[i])
+            self.CheckNoSuccess(rv)
     
         rv=is_ExitCamera (self.cid)
         self.CheckNoSuccess(rv)            
        
     
-    def GrabImage(self, BGR=False):
+    def GrabImage(self, BGR=False, Timeout=500, LeaveLocked=False):
         '''Grabs and reads an image from the camera and returns a numpy array
 
-        By default, returns color images in RGB order. Call with BGR=True to
-        output in BGR (which is OpenCV's preference).
+        By default, returns color images in RGB order for backwards compatibility.
+        If working with OpenCV, you will most likely want to call with BGR=True.
         
+        When using Live mode, it is highly recommended to use LeaveLocked=True,
+        and call UnlockLastBuf() when you're done with the frame so it doesn't get
+        overwritten by the daemon.
         
         Syntax:
         =======
     
         im=cam.GrabImage(BGR=False)
         
+        Input Parameters:
+        =================
+        
+        BGR:
+            When True, color images will be retrieved in BGR order rather than RGB
+            Default value is False (for backwards compatibility).
+
+        Timeout:
+            Max number of milliseconds to wait for a frame before throwing exception.
+            Default value is 500.
+
+        LeaveLocked:
+            When True, the returned frame will be left locked so that the daemon
+            won't overwrite the data in Live mode. You will have to manually unlock
+            the buffer when you are done with it, by calling cam.UnlockLastBuf()
+
         Return Value:
         =============
     
@@ -261,16 +288,32 @@ cdef class Cam:
         '''
         cdef npy.npy_intp dims3[3]
         
-        
-        rv= is_FreezeVideo (self.cid, IS_WAIT)
+        # If we aren't in Live mode, kick off a single capture:
+        if (not self.IsLive()):
+            #rv= is_FreezeVideo (self.cid, IS_WAIT)
+            rv= is_FreezeVideo (self.cid, IS_WAIT)
+            self.CheckNoSuccess(rv)
+
+        # Grab the newest image using the newfangled WaitForNextImage:
+        cdef char * img
+        cdef INT imgId = 0
+        rv= is_WaitForNextImage(self.cid, Timeout, &img, &imgId) 
+        print "rv: %d, imgId: %d, Buffer: %d" % (rv, imgId, <int>img)
+        if (rv == IS_TIMED_OUT):
+            print "Timed out."
+            return 0
         self.CheckNoSuccess(rv)
-        
+        # DEBUGGING:
+
+
+        # Create a numpy memory mapping to the frame:
         if self.colormode==IS_CM_RGB8_PACKED or self.colormode==IS_CM_BGR8_PACKED:
             dims3[0]=self.nMaxHeight
             dims3[1]=self.LineInc/3
             dims3[2]=3
             npy.Py_INCREF( npy.NPY_UINT8 )
-            data = npy.PyArray_SimpleNewFromData(3, dims3, npy.NPY_UINT8, self.Img)
+            #data = npy.PyArray_SimpleNewFromData(3, dims3, npy.NPY_UINT8, self.Img)
+            data = npy.PyArray_SimpleNewFromData(3, dims3, npy.NPY_UINT8, img)
             if BGR != (self.colormode == IS_CM_BGR8_PACKED):
                 data=data[:,:,::-1]
         
@@ -278,12 +321,46 @@ cdef class Cam:
             dims3[0]=self.nMaxHeight
             dims3[1]=self.LineInc
             npy.Py_INCREF( npy.NPY_UINT8 )
-            data = npy.PyArray_SimpleNewFromData(2, dims3, npy.NPY_UINT8, self.Img)
+            #data = npy.PyArray_SimpleNewFromData(2, dims3, npy.NPY_UINT8, self.Img)
+            data = npy.PyArray_SimpleNewFromData(2, dims3, npy.NPY_UINT8, img)
             
         else:
             raise Exception("ColorFormat not suported")
+
+        # Unlock the buffer for future usage:
+        if LeaveLocked:
+            self.LastSeqBuf = img
+        else:
+            rv= is_UnlockSeqBuf(self.cid, IS_IGNORE_PARAMETER, img)
+            self.CheckNoSuccess(rv)
+
         return data
     
+    def UnlockLastBuf(self):
+        '''Unlocks all the sequence buffers in the ring buffer
+
+        This must be called when you are done working with the frame returned
+        by GrabFrame(LeaveLocked=True). But not a second sooner.
+
+        Syntax:
+        =======
+
+        rv=cam.UnlockLastBuf()
+
+        Return Value:
+        =============
+
+        SUCCESS (or an exception will be thrown)
+
+        '''
+        #for i in range(self.BufCount):
+        #    rv=is_UnlockSeqBuf(self.cid, IS_IGNORE_PARAMETER, self.Imgs[i])
+        #    if rv != IS_SUCCESS:
+        #        print "Buffer %i didn't unlock." % i
+            #self.CheckNoSuccess(rv)
+        rv=is_UnlockSeqBuf(self.cid, IS_IGNORE_PARAMETER, self.LastSeqBuf)
+        self.CheckNoSuccess(rv)
+
     def GetExposureRange(self):
         '''Returns the exposure range parameters
         
@@ -1614,6 +1691,23 @@ cdef class Cam:
             raise Exception("Could not set timeout")
         return rv
             
+    def IsLive (self):
+        '''Determine whether camera is free-running or not
+
+        Syntax:
+        =======
+        
+        rv=cam.IsLive()
+             
+
+        Return Values:
+        ==============
+        rv:
+            - TRUE if live capture is enabled
+
+        '''
+        return self.CaptureVideo(IS_GET_LIVE)
+
     def CaptureVideo (self, INT Wait):
         '''Capture Video
         
@@ -1656,7 +1750,8 @@ cdef class Cam:
         '''
         
         rv=is_CaptureVideo (self.cid, Wait)
-        self.CheckNoSuccess(rv)
+        if (Wait != IS_GET_LIVE):
+            self.CheckNoSuccess(rv)
         return rv
     
     def FreezeVideo (self, INT Wait):
@@ -2134,6 +2229,8 @@ cdef class Cam:
         For the RGB16 and RGB15 data formats, the MSBs of the internal 
         8-bit R, G and B colours are used.
 
+        The internal image ring buffer is also (re)initialized
+
         Syntax:
         =======
         
@@ -2171,7 +2268,7 @@ cdef class Cam:
         
         rv:
             if Mode != GET_COLORMODE returns Mode
-            If Mode == GET_COLORMODE returns the actual colormode
+            If Mode == GET_COLORMODE returns the current colormode
             
         Note:
         =====
@@ -2181,25 +2278,37 @@ cdef class Cam:
         '''
         
         rv=is_SetColorMode (self.cid,  Mode)
-        self.CheckNoSuccess(rv)
-        if Mode==IS_GET_COLOR_MODE:
+        if (Mode==IS_GET_COLOR_MODE):
             return rv
+        self.CheckNoSuccess(rv)
 
         # Save information relevant to the colormode
         self.colormode= is_SetColorMode(self.cid, IS_GET_COLOR_MODE)        
         self.bitspixel=bitspixel(self.colormode)
         
-        if self.Img!=NULL:
-            rv=is_FreeImageMem (self.cid, self.Img, self.ImgMemId)
+        if self.Imgs[0]!=NULL:
+            for i in range(self.BufCount):
+                #rv=is_FreeImageMem (self.cid, self.Img, self.ImgMemId)
+                rv=is_FreeImageMem (self.cid, self.Imgs[i], self.BufIds[i])
+                self.CheckNoSuccess(rv)
+                self.Imgs[i] = NULL
+                self.BufIds[i] = 0
+        
+        #rv=is_AllocImageMem(self.cid, self.nMaxWidth, self.nMaxHeight, self.bitspixel, &self.Img, &self.ImgMemId)
+        for i in range(self.BufCount):
+            rv=is_AllocImageMem(self.cid, self.nMaxWidth, self.nMaxHeight, \
+                                self.bitspixel, &self.Imgs[i], &self.BufIds[i])
             self.CheckNoSuccess(rv)
         
-        rv=is_AllocImageMem(self.cid, self.nMaxWidth, self.nMaxHeight, self.bitspixel, &self.Img, &self.ImgMemId)
+            #rv=is_SetImageMem (self.cid, self.Img, self.ImgMemId)
+            rv=is_AddToSequence (self.cid, self.Imgs[i], self.BufIds[i])
+            self.CheckNoSuccess(rv)
+        
+        # Initialize the queue so we can use the WaitForNextImage function
+        rv=is_InitImageQueue (self.cid, 0)
         self.CheckNoSuccess(rv)
         
-        rv=is_SetImageMem (self.cid, self.Img, self.ImgMemId)
-        self.CheckNoSuccess(rv)
-        
-        
+        # Get memory mapping information for later
         rv=is_GetImageMemPitch (self.cid, &self.LineInc)
         self.CheckNoSuccess(rv)
         
@@ -2515,7 +2624,8 @@ cdef class Cam:
         '''
         
         cdef char * ermsg
-        if rv==IS_NO_SUCCESS:
+        #if rv==IS_NO_SUCCESS:
+        if rv != IS_SUCCESS:
             rv1=is_GetError (self.cid, &rv, &ermsg)
             if rv1==IS_NO_SUCCESS:
                 raise Exception("Error getting error message")
