@@ -236,12 +236,15 @@ cdef class Cam:
     
     def GrabImage(self, BGR=False):
         '''Grabs and reads an image from the camera and returns a numpy array
+
+        By default, returns color images in RGB order. Call with BGR=True to
+        output in BGR (which is OpenCV's preference).
         
         
         Syntax:
         =======
     
-        im=cam.GrabImage()
+        im=cam.GrabImage(BGR=False)
         
         Return Value:
         =============
