@@ -225,6 +225,10 @@ cdef class Cam:
         rv=is_FreezeVideo (self.cid, IS_WAIT)
         self.CheckNoSuccess(rv)
         
+        # Enable FRAME events to make video capturing easier:
+        is_EnableEvent(self.cid, IS_SET_EVENT_FRAME);
+        is_InitEvent(self.cid, NULL, IS_SET_EVENT_FRAME);
+        
         #Start with auto BL_Compensation off by default if possible
         
         rv=self.SetBlCompensation(IS_GET_BL_SUPPORTED_MODE, 0)
@@ -249,13 +253,13 @@ cdef class Cam:
         If working with OpenCV, you will most likely want to call with BGR=True.
         
         When using Live mode, it is highly recommended to use LeaveLocked=True,
-        and call UnlockLastBuf() when you're done with the frame so it doesn't get
-        overwritten by the daemon.
+        so that the frame you are using doesn't get overwritten by the driver.
+        The frame will be unlocked on the next call to GrabImage, or by UnlockLastBuf.
         
         Syntax:
         =======
     
-        im=cam.GrabImage(BGR=False)
+        im=cam.GrabImage([BGR,[Timeout,[LeaveLocked]]])
         
         Input Parameters:
         =================
@@ -270,8 +274,9 @@ cdef class Cam:
 
         LeaveLocked:
             When True, the returned frame will be left locked so that the daemon
-            won't overwrite the data in Live mode. You will have to manually unlock
-            the buffer when you are done with it, by calling cam.UnlockLastBuf()
+            won't overwrite the data in Live mode. It is recommended to use True
+            if you are using Live mode. Default is False for back-compatibility.
+            The buffer will be unlocked on the next call to GrabImage.
 
         Return Value:
         =============
@@ -280,6 +285,7 @@ cdef class Cam:
             Numpy array containing the image data. The data from the driver buffer
             to the numpy array. The returned numpy array is modified each time 
             the method is called. 
+            If the request times out, it will return 0.
             
         Note: The default colormode for OpenCV is BGR, so it should be called with
               BGR=True. Default value is False only for backwards-compatibility.
@@ -291,20 +297,59 @@ cdef class Cam:
         # If we aren't in Live mode, kick off a single capture:
         if (not self.IsLive()):
             #rv= is_FreezeVideo (self.cid, IS_WAIT)
-            rv= is_FreezeVideo (self.cid, IS_WAIT)
+            print "Not Live. Grabbing frame."
+            rv= is_FreezeVideo (self.cid, Timeout)
             self.CheckNoSuccess(rv)
 
-        # Grab the newest image using the newfangled WaitForNextImage:
-        cdef char * img
-        cdef INT imgId = 0
-        rv= is_WaitForNextImage(self.cid, Timeout, &img, &imgId) 
-        print "rv: %d, imgId: %d, Buffer: %d" % (rv, imgId, <int>img)
-        if (rv == IS_TIMED_OUT):
-            print "Timed out."
-            return 0
-        self.CheckNoSuccess(rv)
-        # DEBUGGING:
+        # This will return if there was already a frame, or wait for the next one:
+        #rv= is_WaitEvent(self.cid, IS_SET_EVENT_FRAME, Timeout);
+        #if (rv == IS_TIMED_OUT):
+        #    print "Timed out waiting for frame."
+        #    return 0
+        #self.CheckNoSuccess(rv)
 
+        # This is the API's recommended method, but it is unstable:
+        # Grab the oldest image from the queue:
+        #cdef char * img
+        #cdef INT imgId = 0
+        #rv= is_WaitForNextImage(self.cid, Timeout, &img, &imgId) 
+        #print "rv: %d, imgId: %d, Buffer: %d" % (rv, imgId, <int>img)
+        #if (rv == IS_TIMED_OUT):
+        #    print "Timed out."
+        #    self.CheckNoSuccess(rv)
+        #    return 0
+        #elif (rv != IS_SUCCESS):
+        #    print "WaitForNextImage failed. Trying to recover with GetImageMem"
+        #    rv= is_GetImageMem(self.cid, <VOID**> &img)
+        #    self.CheckNoSuccess(rv)
+        #    rv= is_LockSeqBuf(self.cid, IS_IGNORE_PARAMETER, img)
+        #    self.CheckNoSuccess(rv)
+        cdef char * img
+        rv= is_GetImageMem(self.cid, <VOID**> &img)
+        print "GetImageMem - rv: %d, Buffer: %d" % (rv, <int>img)
+        self.CheckNoSuccess(rv)
+        # If the image hasn't updated since last time, wait for it:
+        if (img == self.LastSeqBuf):
+            rv= is_WaitEvent(self.cid, IS_SET_EVENT_FRAME, Timeout/2);
+            # Make sure that actually worked (WaitEvent will often refer to the last one)
+            rv= is_GetImageMem(self.cid, <VOID**> &img)
+            print "GetImageMem - rv: %d, Buffer: %d" % (rv, <int>img)
+            self.CheckNoSuccess(rv)
+            if (img == self.LastSeqBuf):
+                rv= is_WaitEvent(self.cid, IS_SET_EVENT_FRAME, Timeout/2);
+                print "WaitEvent - rv: %d" % (rv)
+                # Make sure that actually worked:
+                rv= is_GetImageMem(self.cid, <VOID**> &img)
+                print "GetImageMem - rv: %d, Buffer: %d" % (rv, <int>img)
+                self.CheckNoSuccess(rv)
+                if (img == self.LastSeqBuf):
+                    #raise Exception("Timed out trying to retrieve frame.")
+                    return 0
+
+        # Unlock previous buffer here, so there's no chance of overwrite.
+        rv= is_UnlockSeqBuf(self.cid, IS_IGNORE_PARAMETER, self.LastSeqBuf)
+        if rv != IS_SUCCESS:
+            print "Buffer %d didn't unlock." % (<int>self.LastSeqBuf)
 
         # Create a numpy memory mapping to the frame:
         if self.colormode==IS_CM_RGB8_PACKED or self.colormode==IS_CM_BGR8_PACKED:
@@ -327,20 +372,21 @@ cdef class Cam:
         else:
             raise Exception("ColorFormat not suported")
 
-        # Unlock the buffer for future usage:
+        # Lock the buffer if requested:
         if LeaveLocked:
-            self.LastSeqBuf = img
-        else:
-            rv= is_UnlockSeqBuf(self.cid, IS_IGNORE_PARAMETER, img)
+            rv= is_LockSeqBuf(self.cid, IS_IGNORE_PARAMETER, img)
             self.CheckNoSuccess(rv)
+
+        self.LastSeqBuf = img
 
         return data
     
     def UnlockLastBuf(self):
         '''Unlocks all the sequence buffers in the ring buffer
 
-        This must be called when you are done working with the frame returned
-        by GrabFrame(LeaveLocked=True). But not a second sooner.
+        This may be called when you are done working with the frame returned
+        by GrabFrame(LeaveLocked=True), but it is not necessary since it will
+        be automatically unlocked on the next call to GrabImage.
 
         Syntax:
         =======
@@ -353,12 +399,9 @@ cdef class Cam:
         SUCCESS (or an exception will be thrown)
 
         '''
-        #for i in range(self.BufCount):
-        #    rv=is_UnlockSeqBuf(self.cid, IS_IGNORE_PARAMETER, self.Imgs[i])
-        #    if rv != IS_SUCCESS:
-        #        print "Buffer %i didn't unlock." % i
-            #self.CheckNoSuccess(rv)
-        rv=is_UnlockSeqBuf(self.cid, IS_IGNORE_PARAMETER, self.LastSeqBuf)
+        rv= is_UnlockSeqBuf(self.cid, IS_IGNORE_PARAMETER, self.LastSeqBuf)
+        #if rv != IS_SUCCESS:
+        #    print "Buffer %d didn't unlock." % (<int>self.LastSeqBuf)
         self.CheckNoSuccess(rv)
 
     def GetExposureRange(self):
@@ -1051,7 +1094,7 @@ cdef class Cam:
         
         '''
         
-        rv=is_SetGlobalShutter (self, mode)
+        rv=is_SetGlobalShutter (self.cid, mode)
         self.CheckNoSuccess(rv)
         return rv
         
@@ -1539,7 +1582,7 @@ cdef class Cam:
         rv:
             - SUCCESS: Function executed successfully
             - NO_SUCCESS: General error message
-            - Current setting when used together with SET_ROP_EFFECT
+            - Current setting when used together with GET_ROP_EFFECT
             - INVALID_MODE: Camera is in standby mode, function not allowed.
         
         '''
@@ -2305,8 +2348,8 @@ cdef class Cam:
             self.CheckNoSuccess(rv)
         
         # Initialize the queue so we can use the WaitForNextImage function
-        rv=is_InitImageQueue (self.cid, 0)
-        self.CheckNoSuccess(rv)
+        #rv=is_InitImageQueue (self.cid, 0)
+        #self.CheckNoSuccess(rv)
         
         # Get memory mapping information for later
         rv=is_GetImageMemPitch (self.cid, &self.LineInc)

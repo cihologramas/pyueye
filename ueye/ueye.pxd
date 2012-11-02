@@ -1986,6 +1986,7 @@ cdef extern from "ueye.h":
         IDSEXP   is_ExitEvent              (HIDS hf, INT which)
         IDSEXP   is_EnableEvent            (HIDS hf, INT which)
         IDSEXP   is_DisableEvent           (HIDS hf, INT which)
+        IDSEXP   is_WaitEvent              (HIDS hf, INT which, INT nTimeout)
 
         IDSEXP   is_SetIO                  (HIDS hf, INT nIO)
         IDSEXP   is_SetFlashStrobe         (HIDS hf, INT nMode, INT nLine)
