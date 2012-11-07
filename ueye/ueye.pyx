@@ -246,6 +246,189 @@ cdef class Cam:
         self.CheckNoSuccess(rv)            
        
     
+    def SetErrorReport(self, INT mode):
+        ''' Set the error reporting mode
+        
+        Using is_SetErrorReport(), you can enable/disable error event logging. 
+        If error reporting is enabled, errors will automatically be displayed 
+        in a dialog box. Cancelling the dialog box disables the error report. 
+        Even with disabled error reporting, you can still query errors using 
+        the is_GetError() function.
+
+        is_SetErrorReport() can be called before calling is_InitCamera().
+        You only need to enable the is_SetErrorReport() function once for all 
+        cameras in the application.
+        
+        Syntax:
+        =======    
+        
+        rv=cam.SetErrorReport(mode)
+        
+        Input Parameters:
+        =================
+        
+        mode:
+            DISABLE_ERR_REP: Disables error reporting.
+
+            ENABLE_ERR_REP: Enables error reporting.
+
+            GET_ERR_REP_MODE: Return current status of error reporting.
+            
+        Return Values:
+        ==============
+            
+            SUCCESS: Function executed successfully
+        
+            Current setting when used together with GET_ERR_REP_MODE
+
+        
+        '''
+        
+        rv= is_SetErrorReport (self.cid, mode)
+        self.CheckNoSuccess(rv)
+        return rv
+
+    def WaitEvent(self, INT which, INT timeout):
+        ''' Wait for a uEye event.
+
+        is_WaitEvent() allows waiting for uEye events. The function indicates 
+        successful execution when the event has occurred within the specified 
+        timeout.
+
+        Note: Event must be enabled with EnableEvent first.
+
+        Syntax:
+        =======
+
+        rv = cam.WaitEvent(which, timeout)
+
+        Input Parameters:
+        =================
+
+        which:
+            SET_EVENT_FRAME:  A new image is available.
+            SET_EVENT_EXTTRIG:    An image which was captured following the 
+                    arrival of a trigger has been transferred completely.
+                    This is the earliest possible moment for a new capturing 
+                    process. The image must then be post-processed by the 
+                    driver and will be available after the IS_FRAME processing 
+                    event.
+            SET_EVENT_SEQ:  The sequence is completed.
+            SET_EVENT_STEAL:  An image extracted from the overlay is available.
+            SET_EVENT_CAPTURE_STATUS:  There is an information about image
+                    capturing available. This information can be requested by
+                    is_CaptureStatus().  Note that this event replaces the former
+            SET_EVENT_TRANSFER_FAILED from previous versions.
+            SET_EVENT_DEVICE_RECONNECTED:  A camera initialized with
+                    is_InitCamera() and disconnected afterwards was reconnected.
+            SET_EVENT_WB_FINISHED:  The automatic white balance control is
+                    completed.
+            SET_EVENT_AUTOBRIGHTNESS_FINISHED:  The automatic brightness
+                    control in the run-once mode is completed.
+            SET_EVENT_OVERLAY_DATA_LOST:  Direct3D/OpenGL mode: Because of a
+                    re-programming the parameters of the overlay are invalid. The
+                    overlay must be draw new.  
+            SET_EVENT_REMOVE:  A camera initialized with is_InitCamera() was
+                    disconnected.
+            SET_EVENT_REMOVAL: A camera was removed.  This is independent of
+                    the device handle (hCam is ignored).  
+            SET_EVENT_NEW_DEVICE:  A new camera was connected.  This is
+                    independent of the device handle (hCam is ignored).  
+            SET_EVENT_STATUS_CHANGED:  The availability of a camera has
+                    changed, e.g. an available camera was opened.
+
+        Return Value:
+        =============
+
+        IS_SUCCESS: Function executed successfully
+        IS_TIMED_OUT: Timeout occured before event arrived.
+
+        An exception is thrown for the following internal return values:
+            IS_NO_SUCCESS: General error message
+        '''
+
+        rv = is_WaitEvent(self.cid, which, timeout)
+        if rv != IS_TIMED_OUT:
+            self.CheckNoSuccess(rv, "WaitEvent")
+        return rv
+
+    def CaptureStatus(self, reset=False):
+        '''Obtain or reset all uEye error counters
+
+        The function returns information on errors that occurred during an
+        image capture. All errors are listed that occurred since the last reset
+        of the function.  
+
+        Syntax:
+        =======
+
+        errorDict = cam.CaptureStatus([reset])
+
+        
+        Input Parameters:
+        =================
+
+        reset: If True, reset all counters to zero instead of returning them.
+
+
+        Return Value:
+        =============
+
+        errorDict: Dictionary object with the following fields. Each field
+                   represents a counter for that type of error.
+                   See API documentation for possible causes/remedies.
+
+            'API_NO_DEST_MEM'
+                There is no destination memory for copying the finished image.
+            'API_CONVERSION_FAILED'
+                The current image could not be processed correctly.
+            'API_IMAGE_LOCKED'
+                The destination buffers are locked and could not be written to.
+            'DRV_OUT_OF_BUFFERS'
+                No free internal image memory is available to the driver. 
+                The image was discarded.
+            'DRV_DEVICE_NOT_READY'
+                The camera is no longer available. It is not possible to access
+                images that have already been transferred.
+            'USB_TRANSFER_FAILED'
+                The image was not transferred over the USB bus.
+            'DEV_TIMEOUT'
+                The maximum allowable time for image capturing in the camera 
+                was exceeded.
+                The selected timeout value is too low for image capture
+            'ETH_BUFFER_OVERRUN'
+                The sensor transfers more data than the internal camera memory 
+                of the GigE uEye can accommodate.
+            'ETH_MISSED_IMAGES'
+                Freerun mode: The GigE uEye camera could neither process nor 
+                output an image captured by the sensor.
+                Hardware trigger mode: The GigE uEye camera received a hardware
+                trigger signal which could not be processed because the sensor 
+                was still busy.
+        '''
+
+        if reset:
+            command = IS_CAPTURE_STATUS_INFO_CMD_RESET
+        else:
+            command = IS_CAPTURE_STATUS_INFO_CMD_GET
+
+        cdef UEYE_CAPTURE_STATUS_INFO status
+        rv = is_CaptureStatus(self.cid, command, &status, sizeof(status))
+        self.CheckNoSuccess(rv)
+
+        return {"Total": status.dwCapStatusCnt_Total,
+            "API_NO_DEST_MEM": status.adwCapStatusCnt_Detail[IS_CAP_STATUS_API_NO_DEST_MEM],
+            "API_CONVERSION_FAILED": status.adwCapStatusCnt_Detail[IS_CAP_STATUS_API_CONVERSION_FAILED],
+            "API_IMAGE_LOCKED": status.adwCapStatusCnt_Detail[IS_CAP_STATUS_API_IMAGE_LOCKED],
+            "DRV_OUT_OF_BUFFERS": status.adwCapStatusCnt_Detail[IS_CAP_STATUS_DRV_OUT_OF_BUFFERS],
+            "DRV_DEVICE_NOT_READY": status.adwCapStatusCnt_Detail[IS_CAP_STATUS_DRV_DEVICE_NOT_READY],
+            "USB_TRANSFER_FAILED": status.adwCapStatusCnt_Detail[IS_CAP_STATUS_USB_TRANSFER_FAILED],
+            "DEV_TIMEOUT": status.adwCapStatusCnt_Detail[IS_CAP_STATUS_DEV_TIMEOUT],
+            "ETH_BUFFER_OVERRUN": status.adwCapStatusCnt_Detail[IS_CAP_STATUS_ETH_BUFFER_OVERRUN],
+            "ETH_MISSED_IMAGES": status.adwCapStatusCnt_Detail[IS_CAP_STATUS_ETH_MISSED_IMAGES],
+            }
+            
+
     def GrabImage(self, BGR=False, Timeout=500, LeaveLocked=False):
         '''Grabs and reads an image from the camera and returns a numpy array
 
@@ -2660,19 +2843,25 @@ cdef class Cam:
         '''
         return is_GetCameraType(self.cid)
     
-    def CheckNoSuccess(self,INT rv):
+    def CheckNoSuccess(self,INT rv, description=None):
         '''Method that checks the return value of a is_XXXX function.
         
-        If rv==NO_SUCCESS, the error mesage is printed and a exception is raised
+        If rv != SUCCESS, the error mesage is printed and a exception is raised
         '''
         
         cdef char * ermsg
         #if rv==IS_NO_SUCCESS:
         if rv != IS_SUCCESS:
-            rv1=is_GetError (self.cid, &rv, &ermsg)
-            if rv1==IS_NO_SUCCESS:
-                raise Exception("Error getting error message")
-            raise Exception(ermsg)
+            if description:
+                err = "Error in '%s' -- " % description
+            else:
+                err = "Error -- "
+
+            err += "API call returned %d, " % rv
+            rv1 = is_GetError (self.cid, &rv, &ermsg)
+            if rv1 != IS_SUCCESS:
+                raise Exception(err + "but no error message available.")
+            raise Exception(err + "'" + ermsg + "'")
             
             
        
@@ -2852,6 +3041,5 @@ cdef class Cam:
 #SetTriggerCounter
 #SetTriggerDelay
 #UnlockSeqBuf
-#WaitEvent 
 #WriteEEPROM
 #WriteI2C
