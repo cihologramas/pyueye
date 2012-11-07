@@ -34,6 +34,7 @@ from stdlib cimport *
 from python_cobject cimport *
 import numpy as npy
 cimport numpy as npy
+from sys import stderr
 
 def GetNumberOfCameras():
     '''Returns the number of connected cams
@@ -127,6 +128,37 @@ def bitspixel(colormode):
       or colormode==IS_CM_RGB10V2_PACKED or colormode==IS_CM_BGR10V2_PACKED:
         return 32;
     else: return 8
+
+def SetErrorReport(enable):
+    '''Enable or disable API error reporting
+
+    When enabled, verbose errors will be printed to stderr directly
+    from the driver API calls.
+
+    is_SetErrorReport() can be called before calling is_InitCamera().
+    You only need to enable the is_SetErrorReport() function once for all 
+    cameras in the application.
+
+    TODO: Implement GetErrorReport?
+
+    Sytnax:
+    =======
+
+    ueye.SetErrorReport(enable)
+
+    Input Parameters:
+    =================
+
+    enable:  True = turn on error reporting. False = turn off (default state)
+    '''
+
+    if enable:
+        mode = IS_ENABLE_ERR_REP
+    else:
+        mode = IS_DISABLE_ERR_REP
+    rv= is_SetErrorReport (0, mode)
+    if rv != IS_SUCCESS:
+        raise Exception("Error setting ErrorReporting. API returned %d" % rv)
     
 npy.import_array() 
 
@@ -161,6 +193,7 @@ cdef class Cam:
             bGlobShutter, bitspixel, colormode
     cdef public INT LineInc, 
     cdef public int ImgMemId
+    cdef int LiveMode
         
     def __init__(self, HIDS cid=0, int bufCount=3):
         #cdef HWND hWnd
@@ -170,6 +203,7 @@ cdef class Cam:
         if rv==IS_STARTER_FW_UPLOAD_NEEDED:
             raise Exception("The camera's starter firmware is not compatible with the driver and needs to be updated.")
         self.cid=cid
+        self.LiveMode = False
         
         cdef CAMINFO cInfo
         rv =is_GetCameraInfo(self.cid, &cInfo)
@@ -246,48 +280,6 @@ cdef class Cam:
         self.CheckNoSuccess(rv)            
        
     
-    def SetErrorReport(self, INT mode):
-        ''' Set the error reporting mode
-        
-        Using is_SetErrorReport(), you can enable/disable error event logging. 
-        If error reporting is enabled, errors will automatically be displayed 
-        in a dialog box. Cancelling the dialog box disables the error report. 
-        Even with disabled error reporting, you can still query errors using 
-        the is_GetError() function.
-
-        is_SetErrorReport() can be called before calling is_InitCamera().
-        You only need to enable the is_SetErrorReport() function once for all 
-        cameras in the application.
-        
-        Syntax:
-        =======    
-        
-        rv=cam.SetErrorReport(mode)
-        
-        Input Parameters:
-        =================
-        
-        mode:
-            DISABLE_ERR_REP: Disables error reporting.
-
-            ENABLE_ERR_REP: Enables error reporting.
-
-            GET_ERR_REP_MODE: Return current status of error reporting.
-            
-        Return Values:
-        ==============
-            
-            SUCCESS: Function executed successfully
-        
-            Current setting when used together with GET_ERR_REP_MODE
-
-        
-        '''
-        
-        rv= is_SetErrorReport (self.cid, mode)
-        self.CheckNoSuccess(rv)
-        return rv
-
     def WaitEvent(self, INT which, INT timeout):
         ''' Wait for a uEye event.
 
@@ -477,10 +469,15 @@ cdef class Cam:
         '''
         cdef npy.npy_intp dims3[3]
         
+        # If we are supposed to be in Live Mode, make sure we still are:
+        if (self.LiveMode and not self.IsLive()):
+            print >> stderr, "Camera dropped out of Live mode. Re-starting..."
+            self.CaptureVideo(IS_WAIT)
+
         # If we aren't in Live mode, kick off a single capture:
-        if (not self.IsLive()):
+        if (not self.LiveMode):
             #rv= is_FreezeVideo (self.cid, IS_WAIT)
-            print "Not Live. Grabbing frame."
+            #print "Not Live. Grabbing frame."
             rv= is_FreezeVideo (self.cid, Timeout)
             self.CheckNoSuccess(rv)
 
@@ -509,30 +506,32 @@ cdef class Cam:
         #    self.CheckNoSuccess(rv)
         cdef char * img
         rv= is_GetImageMem(self.cid, <VOID**> &img)
-        print "GetImageMem - rv: %d, Buffer: %d" % (rv, <int>img)
+        #print "GetImageMem - rv: %d, Buffer: %d" % (rv, <int>img)
         self.CheckNoSuccess(rv)
         # If the image hasn't updated since last time, wait for it:
         if (img == self.LastSeqBuf):
-            rv= is_WaitEvent(self.cid, IS_SET_EVENT_FRAME, Timeout/2);
+            # This WaitEvent call is only to see if one is already waiting:
+            rv= is_WaitEvent(self.cid, IS_SET_EVENT_FRAME, 1);
             # Make sure that actually worked (WaitEvent will often refer to the last one)
             rv= is_GetImageMem(self.cid, <VOID**> &img)
-            print "GetImageMem - rv: %d, Buffer: %d" % (rv, <int>img)
+            #print "GetImageMem - rv: %d, Buffer: %d" % (rv, <int>img)
             self.CheckNoSuccess(rv)
             if (img == self.LastSeqBuf):
-                rv= is_WaitEvent(self.cid, IS_SET_EVENT_FRAME, Timeout/2);
-                print "WaitEvent - rv: %d" % (rv)
+                rv= is_WaitEvent(self.cid, IS_SET_EVENT_FRAME, Timeout);
+                #print "WaitEvent - rv: %d" % (rv)
                 # Make sure that actually worked:
                 rv= is_GetImageMem(self.cid, <VOID**> &img)
-                print "GetImageMem - rv: %d, Buffer: %d" % (rv, <int>img)
+                #print "GetImageMem - rv: %d, Buffer: %d" % (rv, <int>img)
                 self.CheckNoSuccess(rv)
                 if (img == self.LastSeqBuf):
                     #raise Exception("Timed out trying to retrieve frame.")
                     return 0
 
         # Unlock previous buffer here, so there's no chance of overwrite.
-        rv= is_UnlockSeqBuf(self.cid, IS_IGNORE_PARAMETER, self.LastSeqBuf)
-        if rv != IS_SUCCESS:
-            print "Buffer %d didn't unlock." % (<int>self.LastSeqBuf)
+        if self.LastSeqBuf:
+            rv= is_UnlockSeqBuf(self.cid, IS_IGNORE_PARAMETER, self.LastSeqBuf)
+            if rv != IS_SUCCESS:
+                print >> stderr, "Buffer %d didn't unlock." % (<int>self.LastSeqBuf)
 
         # Create a numpy memory mapping to the frame:
         if self.colormode==IS_CM_RGB8_PACKED or self.colormode==IS_CM_BGR8_PACKED:
@@ -565,7 +564,7 @@ cdef class Cam:
         return data
     
     def UnlockLastBuf(self):
-        '''Unlocks all the sequence buffers in the ring buffer
+        '''Unlocks the last-used buffer in the ring buffer
 
         This may be called when you are done working with the frame returned
         by GrabFrame(LeaveLocked=True), but it is not necessary since it will
@@ -1978,6 +1977,7 @@ cdef class Cam:
         rv=is_CaptureVideo (self.cid, Wait)
         if (Wait != IS_GET_LIVE):
             self.CheckNoSuccess(rv)
+            self.LiveMode = True
         return rv
     
     def FreezeVideo (self, INT Wait):
@@ -2052,6 +2052,7 @@ cdef class Cam:
         
         rv= is_StopLiveVideo (self.cid, Wait)
         self.CheckNoSuccess(rv)
+        self.LiveMode = False
         return rv
         
     def SetExternalTrigger (self, INT nTriggerMode):
