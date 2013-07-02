@@ -34,6 +34,7 @@ from stdlib cimport *
 from python_cobject cimport *
 import numpy as npy
 cimport numpy as npy
+from sys import stderr
 
 def GetNumberOfCameras():
     '''Returns the number of connected cams
@@ -127,6 +128,37 @@ def bitspixel(colormode):
       or colormode==IS_CM_RGB10V2_PACKED or colormode==IS_CM_BGR10V2_PACKED:
         return 32;
     else: return 8
+
+def SetErrorReport(enable):
+    '''Enable or disable API error reporting
+
+    When enabled, verbose errors will be printed to stderr directly
+    from the driver API calls.
+
+    is_SetErrorReport() can be called before calling is_InitCamera().
+    You only need to enable the is_SetErrorReport() function once for all 
+    cameras in the application.
+
+    TODO: Implement GetErrorReport?
+
+    Sytnax:
+    =======
+
+    ueye.SetErrorReport(enable)
+
+    Input Parameters:
+    =================
+
+    enable:  True = turn on error reporting. False = turn off (default state)
+    '''
+
+    if enable:
+        mode = IS_ENABLE_ERR_REP
+    else:
+        mode = IS_DISABLE_ERR_REP
+    rv= is_SetErrorReport (0, mode)
+    if rv != IS_SUCCESS:
+        raise Exception("Error setting ErrorReporting. API returned %d" % rv)
     
 npy.import_array() 
 
@@ -151,14 +183,19 @@ cdef class Cam:
     cam:
         Instance to the Cam class assigned to the requested cam.
     '''
-    cdef char *Img
+    cdef char **Imgs
+    cdef int BufCount
+    cdef int *BufIds
+    cdef char *LastSeqBuf
     cdef public HIDS cid
-    cdef public object SerNo,ID,Version,Date,Select,SensorID,strSensorName,nColorMode,nMaxWidth,nMaxHeight,bMasterGain, bRGain, bGGain, bBGain, bGlobShutter, \
-                        bitspixel, colormode
+    cdef public object SerNo,ID,Version,Date,Select,SensorID,strSensorName, \
+            nColorMode,nMaxWidth,nMaxHeight,bMasterGain, bRGain, bGGain, bBGain, \
+            bGlobShutter, bitspixel, colormode
     cdef public INT LineInc, 
     cdef public int ImgMemId
+    cdef int LiveMode
         
-    def __init__(self,HIDS cid=0):
+    def __init__(self, HIDS cid=0, int bufCount=3):
         #cdef HWND hWnd
         rv=is_InitCamera(&cid, NULL)
         #IS_SUCCESS
@@ -166,6 +203,7 @@ cdef class Cam:
         if rv==IS_STARTER_FW_UPLOAD_NEEDED:
             raise Exception("The camera's starter firmware is not compatible with the driver and needs to be updated.")
         self.cid=cid
+        self.LiveMode = False
         
         cdef CAMINFO cInfo
         rv =is_GetCameraInfo(self.cid, &cInfo)
@@ -207,7 +245,10 @@ cdef class Cam:
         
         #Set colormode and assign image memory. The image memory assigment is done 
         #in SetColorMode
-        self.Img=<char *>NULL
+        #self.Img=<char *>NULL
+        self.BufCount = bufCount
+        self.BufIds = <int *>calloc(bufCount, sizeof(int))
+        self.Imgs = <char **>calloc(bufCount, sizeof(char*))
         self.SetColorMode (colormode)    
         
         
@@ -218,6 +259,10 @@ cdef class Cam:
         rv=is_FreezeVideo (self.cid, IS_WAIT)
         self.CheckNoSuccess(rv)
         
+        # Enable FRAME events to make video capturing easier:
+        is_EnableEvent(self.cid, IS_SET_EVENT_FRAME);
+        is_InitEvent(self.cid, NULL, IS_SET_EVENT_FRAME);
+        
         #Start with auto BL_Compensation off by default if possible
         
         rv=self.SetBlCompensation(IS_GET_BL_SUPPORTED_MODE, 0)
@@ -227,22 +272,187 @@ cdef class Cam:
 
     def __dealloc__(self):
         
-        rv=is_FreeImageMem (self.cid,self.Img, self.ImgMemId)
-        self.CheckNoSuccess(rv)
+        for i in range(self.BufCount):
+            rv=is_FreeImageMem (self.cid, self.Imgs[i], self.BufIds[i])
+            self.CheckNoSuccess(rv)
     
         rv=is_ExitCamera (self.cid)
         self.CheckNoSuccess(rv)            
        
     
-    def GrabImage(self):
-        '''Grabs and reads an image from the camera and returns a numpy array
+    def WaitEvent(self, INT which, INT timeout):
+        ''' Wait for a uEye event.
+
+        is_WaitEvent() allows waiting for uEye events. The function indicates 
+        successful execution when the event has occurred within the specified 
+        timeout.
+
+        Note: Event must be enabled with EnableEvent first.
+
+        Syntax:
+        =======
+
+        rv = cam.WaitEvent(which, timeout)
+
+        Input Parameters:
+        =================
+
+        which:
+            SET_EVENT_FRAME:  A new image is available.
+            SET_EVENT_EXTTRIG:    An image which was captured following the 
+                    arrival of a trigger has been transferred completely.
+                    This is the earliest possible moment for a new capturing 
+                    process. The image must then be post-processed by the 
+                    driver and will be available after the IS_FRAME processing 
+                    event.
+            SET_EVENT_SEQ:  The sequence is completed.
+            SET_EVENT_STEAL:  An image extracted from the overlay is available.
+            SET_EVENT_CAPTURE_STATUS:  There is an information about image
+                    capturing available. This information can be requested by
+                    is_CaptureStatus().  Note that this event replaces the former
+            SET_EVENT_TRANSFER_FAILED from previous versions.
+            SET_EVENT_DEVICE_RECONNECTED:  A camera initialized with
+                    is_InitCamera() and disconnected afterwards was reconnected.
+            SET_EVENT_WB_FINISHED:  The automatic white balance control is
+                    completed.
+            SET_EVENT_AUTOBRIGHTNESS_FINISHED:  The automatic brightness
+                    control in the run-once mode is completed.
+            SET_EVENT_OVERLAY_DATA_LOST:  Direct3D/OpenGL mode: Because of a
+                    re-programming the parameters of the overlay are invalid. The
+                    overlay must be draw new.  
+            SET_EVENT_REMOVE:  A camera initialized with is_InitCamera() was
+                    disconnected.
+            SET_EVENT_REMOVAL: A camera was removed.  This is independent of
+                    the device handle (hCam is ignored).  
+            SET_EVENT_NEW_DEVICE:  A new camera was connected.  This is
+                    independent of the device handle (hCam is ignored).  
+            SET_EVENT_STATUS_CHANGED:  The availability of a camera has
+                    changed, e.g. an available camera was opened.
+
+        Return Value:
+        =============
+
+        IS_SUCCESS: Function executed successfully
+        IS_TIMED_OUT: Timeout occured before event arrived.
+
+        An exception is thrown for the following internal return values:
+            IS_NO_SUCCESS: General error message
+        '''
+
+        rv = is_WaitEvent(self.cid, which, timeout)
+        if rv != IS_TIMED_OUT:
+            self.CheckNoSuccess(rv, "WaitEvent")
+        return rv
+
+    def CaptureStatus(self, reset=False):
+        '''Obtain or reset all uEye error counters
+
+        The function returns information on errors that occurred during an
+        image capture. All errors are listed that occurred since the last reset
+        of the function.  
+
+        Syntax:
+        =======
+
+        errorDict = cam.CaptureStatus([reset])
+
         
+        Input Parameters:
+        =================
+
+        reset: If True, reset all counters to zero instead of returning them.
+
+
+        Return Value:
+        =============
+
+        errorDict: Dictionary object with the following fields. Each field
+                   represents a counter for that type of error.
+                   See API documentation for possible causes/remedies.
+
+            'API_NO_DEST_MEM'
+                There is no destination memory for copying the finished image.
+            'API_CONVERSION_FAILED'
+                The current image could not be processed correctly.
+            'API_IMAGE_LOCKED'
+                The destination buffers are locked and could not be written to.
+            'DRV_OUT_OF_BUFFERS'
+                No free internal image memory is available to the driver. 
+                The image was discarded.
+            'DRV_DEVICE_NOT_READY'
+                The camera is no longer available. It is not possible to access
+                images that have already been transferred.
+            'USB_TRANSFER_FAILED'
+                The image was not transferred over the USB bus.
+            'DEV_TIMEOUT'
+                The maximum allowable time for image capturing in the camera 
+                was exceeded.
+                The selected timeout value is too low for image capture
+            'ETH_BUFFER_OVERRUN'
+                The sensor transfers more data than the internal camera memory 
+                of the GigE uEye can accommodate.
+            'ETH_MISSED_IMAGES'
+                Freerun mode: The GigE uEye camera could neither process nor 
+                output an image captured by the sensor.
+                Hardware trigger mode: The GigE uEye camera received a hardware
+                trigger signal which could not be processed because the sensor 
+                was still busy.
+        '''
+
+        if reset:
+            command = IS_CAPTURE_STATUS_INFO_CMD_RESET
+        else:
+            command = IS_CAPTURE_STATUS_INFO_CMD_GET
+
+        cdef UEYE_CAPTURE_STATUS_INFO status
+        rv = is_CaptureStatus(self.cid, command, &status, sizeof(status))
+        self.CheckNoSuccess(rv)
+
+        return {"Total": status.dwCapStatusCnt_Total,
+            "API_NO_DEST_MEM": status.adwCapStatusCnt_Detail[IS_CAP_STATUS_API_NO_DEST_MEM],
+            "API_CONVERSION_FAILED": status.adwCapStatusCnt_Detail[IS_CAP_STATUS_API_CONVERSION_FAILED],
+            "API_IMAGE_LOCKED": status.adwCapStatusCnt_Detail[IS_CAP_STATUS_API_IMAGE_LOCKED],
+            "DRV_OUT_OF_BUFFERS": status.adwCapStatusCnt_Detail[IS_CAP_STATUS_DRV_OUT_OF_BUFFERS],
+            "DRV_DEVICE_NOT_READY": status.adwCapStatusCnt_Detail[IS_CAP_STATUS_DRV_DEVICE_NOT_READY],
+            "USB_TRANSFER_FAILED": status.adwCapStatusCnt_Detail[IS_CAP_STATUS_USB_TRANSFER_FAILED],
+            "DEV_TIMEOUT": status.adwCapStatusCnt_Detail[IS_CAP_STATUS_DEV_TIMEOUT],
+            "ETH_BUFFER_OVERRUN": status.adwCapStatusCnt_Detail[IS_CAP_STATUS_ETH_BUFFER_OVERRUN],
+            "ETH_MISSED_IMAGES": status.adwCapStatusCnt_Detail[IS_CAP_STATUS_ETH_MISSED_IMAGES],
+            }
+            
+
+    def GrabImage(self, BGR=False, Timeout=500, LeaveLocked=False):
+        '''Grabs and reads an image from the camera and returns a numpy array
+
+        By default, returns color images in RGB order for backwards compatibility.
+        If working with OpenCV, you will most likely want to call with BGR=True.
+        
+        When using Live mode, it is highly recommended to use LeaveLocked=True,
+        so that the frame you are using doesn't get overwritten by the driver.
+        The frame will be unlocked on the next call to GrabImage, or by UnlockLastBuf.
         
         Syntax:
         =======
     
-        im=cam.GrabImage()
+        im=cam.GrabImage([BGR,[Timeout,[LeaveLocked]]])
         
+        Input Parameters:
+        =================
+        
+        BGR:
+            When True, color images will be retrieved in BGR order rather than RGB
+            Default value is False (for backwards compatibility).
+
+        Timeout:
+            Max number of milliseconds to wait for a frame before throwing exception.
+            Default value is 500.
+
+        LeaveLocked:
+            When True, the returned frame will be left locked so that the daemon
+            won't overwrite the data in Live mode. It is recommended to use True
+            if you are using Live mode. Default is False for back-compatibility.
+            The buffer will be unlocked on the next call to GrabImage.
+
         Return Value:
         =============
     
@@ -250,37 +460,132 @@ cdef class Cam:
             Numpy array containing the image data. The data from the driver buffer
             to the numpy array. The returned numpy array is modified each time 
             the method is called. 
+            If the request times out, it will return 0.
             
-        Note: The default colormode for color cameras is BGR, so the imshow in numpy
-        is not showing the correct colors
+        Note: The default colormode for OpenCV is BGR, so it should be called with
+              BGR=True. Default value is False only for backwards-compatibility.
 
 
         '''
         cdef npy.npy_intp dims3[3]
         
-        
-        rv= is_FreezeVideo (self.cid, IS_WAIT)
+        # If we are supposed to be in Live Mode, make sure we still are:
+        if (self.LiveMode and not self.IsLive()):
+            print >> stderr, "Camera dropped out of Live mode. Re-starting..."
+            self.CaptureVideo(IS_WAIT)
+
+        # If we aren't in Live mode, kick off a single capture:
+        if (not self.LiveMode):
+            #rv= is_FreezeVideo (self.cid, IS_WAIT)
+            #print "Not Live. Grabbing frame."
+            rv= is_FreezeVideo (self.cid, Timeout)
+            self.CheckNoSuccess(rv)
+
+        # This will return if there was already a frame, or wait for the next one:
+        #rv= is_WaitEvent(self.cid, IS_SET_EVENT_FRAME, Timeout);
+        #if (rv == IS_TIMED_OUT):
+        #    print "Timed out waiting for frame."
+        #    return 0
+        #self.CheckNoSuccess(rv)
+
+        # This is the API's recommended method, but it is unstable:
+        # Grab the oldest image from the queue:
+        #cdef char * img
+        #cdef INT imgId = 0
+        #rv= is_WaitForNextImage(self.cid, Timeout, &img, &imgId) 
+        #print "rv: %d, imgId: %d, Buffer: %d" % (rv, imgId, <int>img)
+        #if (rv == IS_TIMED_OUT):
+        #    print "Timed out."
+        #    self.CheckNoSuccess(rv)
+        #    return 0
+        #elif (rv != IS_SUCCESS):
+        #    print "WaitForNextImage failed. Trying to recover with GetImageMem"
+        #    rv= is_GetImageMem(self.cid, <VOID**> &img)
+        #    self.CheckNoSuccess(rv)
+        #    rv= is_LockSeqBuf(self.cid, IS_IGNORE_PARAMETER, img)
+        #    self.CheckNoSuccess(rv)
+        cdef char * img
+        rv= is_GetImageMem(self.cid, <VOID**> &img)
+        #print "GetImageMem - rv: %d, Buffer: %d" % (rv, <int>img)
         self.CheckNoSuccess(rv)
-        
+        # If the image hasn't updated since last time, wait for it:
+        if (img == self.LastSeqBuf):
+            # This WaitEvent call is only to see if one is already waiting:
+            rv= is_WaitEvent(self.cid, IS_SET_EVENT_FRAME, 1);
+            # Make sure that actually worked (WaitEvent will often refer to the last one)
+            rv= is_GetImageMem(self.cid, <VOID**> &img)
+            #print "GetImageMem - rv: %d, Buffer: %d" % (rv, <int>img)
+            self.CheckNoSuccess(rv)
+            if (img == self.LastSeqBuf):
+                rv= is_WaitEvent(self.cid, IS_SET_EVENT_FRAME, Timeout);
+                #print "WaitEvent - rv: %d" % (rv)
+                # Make sure that actually worked:
+                rv= is_GetImageMem(self.cid, <VOID**> &img)
+                #print "GetImageMem - rv: %d, Buffer: %d" % (rv, <int>img)
+                self.CheckNoSuccess(rv)
+                if (img == self.LastSeqBuf):
+                    #raise Exception("Timed out trying to retrieve frame.")
+                    return 0
+
+        # Unlock previous buffer here, so there's no chance of overwrite.
+        if self.LastSeqBuf:
+            rv= is_UnlockSeqBuf(self.cid, IS_IGNORE_PARAMETER, self.LastSeqBuf)
+            if rv != IS_SUCCESS:
+                print >> stderr, "Buffer %d didn't unlock." % (<int>self.LastSeqBuf)
+
+        # Create a numpy memory mapping to the frame:
         if self.colormode==IS_CM_RGB8_PACKED or self.colormode==IS_CM_BGR8_PACKED:
             dims3[0]=self.nMaxHeight
             dims3[1]=self.LineInc/3
             dims3[2]=3
             npy.Py_INCREF( npy.NPY_UINT8 )
-            data = npy.PyArray_SimpleNewFromData(3, dims3, npy.NPY_UINT8, self.Img)
-            if self.colormode==IS_CM_BGR8_PACKED:
+            #data = npy.PyArray_SimpleNewFromData(3, dims3, npy.NPY_UINT8, self.Img)
+            data = npy.PyArray_SimpleNewFromData(3, dims3, npy.NPY_UINT8, img)
+            if BGR != (self.colormode == IS_CM_BGR8_PACKED):
                 data=data[:,:,::-1]
         
         elif self.colormode==IS_CM_MONO8:
             dims3[0]=self.nMaxHeight
             dims3[1]=self.LineInc
             npy.Py_INCREF( npy.NPY_UINT8 )
-            data = npy.PyArray_SimpleNewFromData(2, dims3, npy.NPY_UINT8, self.Img)
+            #data = npy.PyArray_SimpleNewFromData(2, dims3, npy.NPY_UINT8, self.Img)
+            data = npy.PyArray_SimpleNewFromData(2, dims3, npy.NPY_UINT8, img)
             
         else:
             raise Exception("ColorFormat not suported")
+
+        # Lock the buffer if requested:
+        if LeaveLocked:
+            rv= is_LockSeqBuf(self.cid, IS_IGNORE_PARAMETER, img)
+            self.CheckNoSuccess(rv)
+
+        self.LastSeqBuf = img
+
         return data
     
+    def UnlockLastBuf(self):
+        '''Unlocks the last-used buffer in the ring buffer
+
+        This may be called when you are done working with the frame returned
+        by GrabFrame(LeaveLocked=True), but it is not necessary since it will
+        be automatically unlocked on the next call to GrabImage.
+
+        Syntax:
+        =======
+
+        rv=cam.UnlockLastBuf()
+
+        Return Value:
+        =============
+
+        SUCCESS (or an exception will be thrown)
+
+        '''
+        rv= is_UnlockSeqBuf(self.cid, IS_IGNORE_PARAMETER, self.LastSeqBuf)
+        #if rv != IS_SUCCESS:
+        #    print "Buffer %d didn't unlock." % (<int>self.LastSeqBuf)
+        self.CheckNoSuccess(rv)
+
     def GetExposureRange(self):
         '''Returns the exposure range parameters
         
@@ -971,7 +1276,7 @@ cdef class Cam:
         
         '''
         
-        rv=is_SetGlobalShutter (self, mode)
+        rv=is_SetGlobalShutter (self.cid, mode)
         self.CheckNoSuccess(rv)
         return rv
         
@@ -1459,7 +1764,7 @@ cdef class Cam:
         rv:
             - SUCCESS: Function executed successfully
             - NO_SUCCESS: General error message
-            - Current setting when used together with SET_ROP_EFFECT
+            - Current setting when used together with GET_ROP_EFFECT
             - INVALID_MODE: Camera is in standby mode, function not allowed.
         
         '''
@@ -1611,6 +1916,23 @@ cdef class Cam:
             raise Exception("Could not set timeout")
         return rv
             
+    def IsLive (self):
+        '''Determine whether camera is free-running or not
+
+        Syntax:
+        =======
+        
+        rv=cam.IsLive()
+             
+
+        Return Values:
+        ==============
+        rv:
+            - TRUE if live capture is enabled
+
+        '''
+        return self.CaptureVideo(IS_GET_LIVE)
+
     def CaptureVideo (self, INT Wait):
         '''Capture Video
         
@@ -1653,7 +1975,9 @@ cdef class Cam:
         '''
         
         rv=is_CaptureVideo (self.cid, Wait)
-        self.CheckNoSuccess(rv)
+        if (Wait != IS_GET_LIVE):
+            self.CheckNoSuccess(rv)
+            self.LiveMode = True
         return rv
     
     def FreezeVideo (self, INT Wait):
@@ -1728,6 +2052,7 @@ cdef class Cam:
         
         rv= is_StopLiveVideo (self.cid, Wait)
         self.CheckNoSuccess(rv)
+        self.LiveMode = False
         return rv
         
     def SetExternalTrigger (self, INT nTriggerMode):
@@ -2131,6 +2456,8 @@ cdef class Cam:
         For the RGB16 and RGB15 data formats, the MSBs of the internal 
         8-bit R, G and B colours are used.
 
+        The internal image ring buffer is also (re)initialized
+
         Syntax:
         =======
         
@@ -2168,7 +2495,7 @@ cdef class Cam:
         
         rv:
             if Mode != GET_COLORMODE returns Mode
-            If Mode == GET_COLORMODE returns the actual colormode
+            If Mode == GET_COLORMODE returns the current colormode
             
         Note:
         =====
@@ -2178,25 +2505,37 @@ cdef class Cam:
         '''
         
         rv=is_SetColorMode (self.cid,  Mode)
-        self.CheckNoSuccess(rv)
-        if Mode==IS_GET_COLOR_MODE:
+        if (Mode==IS_GET_COLOR_MODE):
             return rv
+        self.CheckNoSuccess(rv)
 
         # Save information relevant to the colormode
         self.colormode= is_SetColorMode(self.cid, IS_GET_COLOR_MODE)        
         self.bitspixel=bitspixel(self.colormode)
         
-        if self.Img!=NULL:
-            rv=is_FreeImageMem (self.cid, self.Img, self.ImgMemId)
+        if self.Imgs[0]!=NULL:
+            for i in range(self.BufCount):
+                #rv=is_FreeImageMem (self.cid, self.Img, self.ImgMemId)
+                rv=is_FreeImageMem (self.cid, self.Imgs[i], self.BufIds[i])
+                self.CheckNoSuccess(rv)
+                self.Imgs[i] = NULL
+                self.BufIds[i] = 0
+        
+        #rv=is_AllocImageMem(self.cid, self.nMaxWidth, self.nMaxHeight, self.bitspixel, &self.Img, &self.ImgMemId)
+        for i in range(self.BufCount):
+            rv=is_AllocImageMem(self.cid, self.nMaxWidth, self.nMaxHeight, \
+                                self.bitspixel, &self.Imgs[i], &self.BufIds[i])
             self.CheckNoSuccess(rv)
         
-        rv=is_AllocImageMem(self.cid, self.nMaxWidth, self.nMaxHeight, self.bitspixel, &self.Img, &self.ImgMemId)
-        self.CheckNoSuccess(rv)
+            #rv=is_SetImageMem (self.cid, self.Img, self.ImgMemId)
+            rv=is_AddToSequence (self.cid, self.Imgs[i], self.BufIds[i])
+            self.CheckNoSuccess(rv)
         
-        rv=is_SetImageMem (self.cid, self.Img, self.ImgMemId)
-        self.CheckNoSuccess(rv)
+        # Initialize the queue so we can use the WaitForNextImage function
+        #rv=is_InitImageQueue (self.cid, 0)
+        #self.CheckNoSuccess(rv)
         
-        
+        # Get memory mapping information for later
         rv=is_GetImageMemPitch (self.cid, &self.LineInc)
         self.CheckNoSuccess(rv)
         
@@ -2505,18 +2844,25 @@ cdef class Cam:
         '''
         return is_GetCameraType(self.cid)
     
-    def CheckNoSuccess(self,INT rv):
+    def CheckNoSuccess(self,INT rv, description=None):
         '''Method that checks the return value of a is_XXXX function.
         
-        If rv==NO_SUCCESS, the error mesage is printed and a exception is raised
+        If rv != SUCCESS, the error mesage is printed and a exception is raised
         '''
         
         cdef char * ermsg
-        if rv==IS_NO_SUCCESS:
-            rv1=is_GetError (self.cid, &rv, &ermsg)
-            if rv1==IS_NO_SUCCESS:
-                raise Exception("Error getting error message")
-            raise Exception(ermsg)
+        #if rv==IS_NO_SUCCESS:
+        if rv != IS_SUCCESS:
+            if description:
+                err = "Error in '%s' -- " % description
+            else:
+                err = "Error -- "
+
+            err += "API call returned %d, " % rv
+            rv1 = is_GetError (self.cid, &rv, &ermsg)
+            if rv1 != IS_SUCCESS:
+                raise Exception(err + "but no error message available.")
+            raise Exception(err + "'" + ermsg + "'")
             
             
        
@@ -2696,6 +3042,5 @@ cdef class Cam:
 #SetTriggerCounter
 #SetTriggerDelay
 #UnlockSeqBuf
-#WaitEvent 
 #WriteEEPROM
 #WriteI2C

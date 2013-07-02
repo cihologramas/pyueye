@@ -1717,33 +1717,30 @@ cdef extern from "ueye.h":
 # Capture errors
 # ----------------------------------------------------------------------------
 
-#~ typedef enum _UEYE_CAPTURE_ERROR
-#~ {
-    #~ IS_CAPERR_API_NO_DEST_MEM=              0xa2,
-    #~ IS_CAPERR_API_CONVERSION_FAILED=        0xa3,
-    #~ IS_CAPERR_API_IMAGE_LOCKED=             0xa5,
-#~ 
-    #~ IS_CAPERR_DRV_OUT_OF_BUFFERS=           0xb2,
-    #~ IS_CAPERR_DRV_DEVICE_NOT_READY=         0xb4,
-#~ 
-    #~ IS_CAPERR_USB_TRANSFER_FAILED=          0xc7,
-#~ 
-    #~ IS_CAPERR_DEV_TIMEOUT=                  0xd6,
-#~ 
-    #~ IS_CAPERR_ETH_BUFFER_OVERRUN=           0xe4,
-    #~ IS_CAPERR_ETH_MISSED_IMAGES=            0xe5
-#~ 
-#~ } UEYE_CAPTURE_ERROR
-#~ 
-#~ typedef struct _UEYE_CAPTURE_ERROR_INFO
-#~ {
-    #~ DWORD dwCapErrCnt_Total
-#~ 
-    #~ BYTE  reserved[60]
-#~ 
-    #~ DWORD adwCapErrCnt_Detail[256] # access via UEYE_CAPTURE_ERROR
-#~ 
-#~ } UEYE_CAPTURE_ERROR_INFO
+        int IS_CAP_STATUS_API_NO_DEST_MEM      
+        int IS_CAP_STATUS_API_CONVERSION_FAILED
+        int IS_CAP_STATUS_API_IMAGE_LOCKED     
+
+        int IS_CAP_STATUS_DRV_OUT_OF_BUFFERS   
+        int IS_CAP_STATUS_DRV_DEVICE_NOT_READY 
+
+        int IS_CAP_STATUS_USB_TRANSFER_FAILED  
+
+        int IS_CAP_STATUS_DEV_TIMEOUT          
+
+        int IS_CAP_STATUS_ETH_BUFFER_OVERRUN   
+        int IS_CAP_STATUS_ETH_MISSED_IMAGES    
+ 
+        struct _UEYE_CAPTURE_STATUS_INFO:
+            DWORD dwCapStatusCnt_Total
+            BYTE  reserved[60]
+            DWORD adwCapStatusCnt_Detail[256] # // access via UEYE_CAPTURE_STATUS
+
+        ctypedef _UEYE_CAPTURE_STATUS_INFO UEYE_CAPTURE_STATUS_INFO
+
+
+        int IS_CAPTURE_STATUS_INFO_CMD_RESET
+        int IS_CAPTURE_STATUS_INFO_CMD_GET  
 #~ 
 #~ 
 #~ 
@@ -1986,6 +1983,7 @@ cdef extern from "ueye.h":
         IDSEXP   is_ExitEvent              (HIDS hf, INT which)
         IDSEXP   is_EnableEvent            (HIDS hf, INT which)
         IDSEXP   is_DisableEvent           (HIDS hf, INT which)
+        IDSEXP   is_WaitEvent              (HIDS hf, INT which, INT nTimeout)
 
         IDSEXP   is_SetIO                  (HIDS hf, INT nIO)
         IDSEXP   is_SetFlashStrobe         (HIDS hf, INT nMode, INT nLine)
@@ -2183,7 +2181,8 @@ cdef extern from "ueye.h":
         IDSEXP is_SetColorConverter           (HIDS hf, INT ColorMode, INT ConvertMode)
  
         #IDSEXP is_GetCaptureErrorInfo         (HIDS hf, UEYE_CAPTURE_ERROR_INFO *pCaptureErrorInfo, UINT SizeCaptureErrorInfo)
-        IDSEXP is_ResetCaptureErrorInfo       (HIDS hf )
+        #IDSEXP is_ResetCaptureErrorInfo       (HIDS hf )
+        IDSEXP is_CaptureStatus               (HIDS hf, UINT nCommand, UEYE_CAPTURE_STATUS_INFO *pParam, UINT cbSizeOfParam)
  
         IDSEXP is_WaitForNextImage            (HIDS hf, UINT timeout, char **ppcMem, INT *imageID)
         IDSEXP is_InitImageQueue              (HIDS hf, INT nMode)
