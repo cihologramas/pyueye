@@ -895,11 +895,11 @@ cdef extern from "ueye.h":
         int IS_CM_MONO12                # occupies 16 Bit
         int IS_CM_MONO16                # occupies 16 Bit
 
-        int IS_CM_BAYER_RG8             # occupies 8 Bit
-        int IS_CM_BAYER_RG12            # occupies 16 Bit
-        int IS_CM_BAYER_RG16            # occupies 16 Bit
+        #int IS_CM_BAYER_RG8             # occupies 8 Bit
+        #int IS_CM_BAYER_RG12            # occupies 16 Bit
+        #int IS_CM_BAYER_RG16            # occupies 16 Bit
 
-        int IS_CM_BGR555_PACKED         # occupies 16 Bit
+        #int IS_CM_BGR555_PACKED         # occupies 16 Bit
         int IS_CM_BGR565_PACKED         # occupies 16 Bit 
 
         int IS_CM_RGB8_PACKED           # occupies 24 Bit
@@ -908,8 +908,8 @@ cdef extern from "ueye.h":
         int IS_CM_BGRA8_PACKED          # occupies 32 Bit
         int IS_CM_RGBY8_PACKED          # occupies 32 Bit
         int IS_CM_BGRY8_PACKED          # occupies 32 Bit
-        int IS_CM_RGB10V2_PACKED        # occupies 32 Bit
-        int IS_CM_BGR10V2_PACKED        # occupies 32 Bit
+        #int IS_CM_RGB10V2_PACKED        # occupies 32 Bit
+        #int IS_CM_BGR10V2_PACKED        # occupies 32 Bit
 
         int IS_CM_YUV422_PACKED         # no compliant version      
         int IS_CM_UYVY_PACKED           # occupies 16 Bit

@@ -114,18 +114,16 @@ def bitspixel(colormode):
     bpp:
         Bits per pixel corresponding to the given colormode
     '''
-    if colormode==IS_CM_MONO8 or colormode==IS_CM_BAYER_RG8:
+    if colormode==IS_CM_MONO8:
         return 8
     elif colormode==IS_CM_MONO12        or colormode==IS_CM_MONO16        \
-      or colormode==IS_CM_BAYER_RG12    or colormode==IS_CM_BAYER_RG16    \
-      or colormode==IS_CM_BGR555_PACKED or colormode==IS_CM_BGR565_PACKED \
+      or colormode==IS_CM_BGR565_PACKED \
       or colormode==IS_CM_UYVY_PACKED   or colormode==IS_CM_CBYCRY_PACKED:
         return 16
     elif colormode==IS_CM_RGB8_PACKED or colormode==IS_CM_BGR8_PACKED:
         return 24
     elif colormode==IS_CM_RGBA8_PACKED or colormode==IS_CM_BGRA8_PACKED   \
-      or colormode==IS_CM_RGBY8_PACKED or colormode==IS_CM_BGRY8_PACKED   \
-      or colormode==IS_CM_RGB10V2_PACKED or colormode==IS_CM_BGR10V2_PACKED:
+      or colormode==IS_CM_RGBY8_PACKED or colormode==IS_CM_BGRY8_PACKED:
         return 32;
     else: return 8
 
@@ -507,7 +505,7 @@ cdef class Cam:
         cdef char * img
         rv= is_GetImageMem(self.cid, <VOID**> &img)
         #print "GetImageMem - rv: %d, Buffer: %d" % (rv, <int>img)
-        self.CheckNoSuccess(rv)
+        self.CheckNoSuccess(rv, "First GetImageMem")
         # If the image hasn't updated since last time, wait for it:
         if (img == self.LastSeqBuf):
             # This WaitEvent call is only to see if one is already waiting:
@@ -515,14 +513,14 @@ cdef class Cam:
             # Make sure that actually worked (WaitEvent will often refer to the last one)
             rv= is_GetImageMem(self.cid, <VOID**> &img)
             #print "GetImageMem - rv: %d, Buffer: %d" % (rv, <int>img)
-            self.CheckNoSuccess(rv)
+            self.CheckNoSuccess(rv, "Second GetImageMem")
             if (img == self.LastSeqBuf):
                 rv= is_WaitEvent(self.cid, IS_SET_EVENT_FRAME, Timeout);
                 #print "WaitEvent - rv: %d" % (rv)
                 # Make sure that actually worked:
                 rv= is_GetImageMem(self.cid, <VOID**> &img)
                 #print "GetImageMem - rv: %d, Buffer: %d" % (rv, <int>img)
-                self.CheckNoSuccess(rv)
+                self.CheckNoSuccess(rv, "Third GetImageMem")
                 if (img == self.LastSeqBuf):
                     #raise Exception("Timed out trying to retrieve frame.")
                     return 0
@@ -2468,22 +2466,16 @@ cdef class Cam:
         
         Mode: 
             Colour mode to be set
-            - CM_BAYER_RG16       -       Raw Bayer (16)
-            - CM_BAYER_RG12       -       Raw Bayer (12)
-            - CM_BAYER_RG8        -       Raw Bayer (8)
             - CM_MONO16           -       Greyscale (16)
             - CM_MONO12           -       Greyscale (12)
             - CM_MONO8            -       Greyscale (8)
-            - CM_RGB10V2_PACKED   -       RGB30 (10 10 10)
             - CM_RGBA8_PACKED     -       RGB32 (8 8 8)
             - CM_RGBY8_PACKED     -       RGBY (8 8 8 8)
             - CM_RGB8_PACKED      -       RGB24 (8 8 8)
-            - CM_BGR10V2_PACKED   -       BGR30 (10 10 10)
             - CM_BGRA8_PACKED     -       BGR32 (8 8 8)
             - CM_BGR8_PACKED      -       BGR24 (8 8 8)
             - CM_BGRY8_PACKED     -       BGRY (8 8 8)
             - CM_BGR565_PACKED    -       BGR16 (5 6 5)
-            - CM_BGR555_PACKED    -       BGR15 (5 5 5)
             - CM_UYVY_PACKED      -       UYVY (8 8 8 8)
             - CM_UYVY_MONO_PACKED -       UYVY (8 8 8 8)
             - CM_UYVY_BAYER_PACKED-       UYVY (8 8 8 8)
