@@ -505,7 +505,7 @@ cdef class Cam:
         cdef char * img
         rv= is_GetImageMem(self.cid, <VOID**> &img)
         #print "GetImageMem - rv: %d, Buffer: %d" % (rv, <int>img)
-        self.CheckNoSuccess(rv, "First GetImageMem")
+        self.CheckNoSuccess(rv, "First GetImageMem") 
         # If the image hasn't updated since last time, wait for it:
         if (img == self.LastSeqBuf):
             # This WaitEvent call is only to see if one is already waiting:

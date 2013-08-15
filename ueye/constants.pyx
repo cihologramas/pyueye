@@ -836,11 +836,11 @@ CM_MONO8                        =   IS_CM_MONO8                                 
 CM_MONO12                       =   IS_CM_MONO12                                                           # occupies 16 Bit
 CM_MONO16                       =   IS_CM_MONO16                                                           # occupies 16 Bit
 
-CM_BAYER_RG8                    =   IS_CM_BAYER_RG8                                                      # occupies 8 Bit
-CM_BAYER_RG12                   =   IS_CM_BAYER_RG12                                                   # occupies 16 Bit
-CM_BAYER_RG16                   =   IS_CM_BAYER_RG16                                                   # occupies 16 Bit
+#CM_BAYER_RG8                    =   IS_CM_BAYER_RG8                                                      # occupies 8 Bit
+#CM_BAYER_RG12                   =   IS_CM_BAYER_RG12                                                   # occupies 16 Bit
+#CM_BAYER_RG16                   =   IS_CM_BAYER_RG16                                                   # occupies 16 Bit
 
-CM_BGR555_PACKED                =   IS_CM_BGR555_PACKED          # occupies 16 Bit
+#CM_BGR555_PACKED                =   IS_CM_BGR555_PACKED          # occupies 16 Bit
 CM_BGR565_PACKED                =   IS_CM_BGR565_PACKED          # occupies 16 Bit 
 
 CM_RGB8_PACKED                  =   IS_CM_RGB8_PACKED            # occupies 24 Bit
@@ -849,8 +849,8 @@ CM_RGBA8_PACKED                 =   IS_CM_RGBA8_PACKED           # occupies 32 B
 CM_BGRA8_PACKED                 =   IS_CM_BGRA8_PACKED           # occupies 32 Bit
 CM_RGBY8_PACKED                 =   IS_CM_RGBY8_PACKED           # occupies 32 Bit
 CM_BGRY8_PACKED                 =   IS_CM_BGRY8_PACKED           # occupies 32 Bit
-CM_RGB10V2_PACKED               =   IS_CM_RGB10V2_PACKED         # occupies 32 Bit
-CM_BGR10V2_PACKED               =   IS_CM_BGR10V2_PACKED         # occupies 32 Bit
+#CM_RGB10V2_PACKED               =   IS_CM_RGB10V2_PACKED         # occupies 32 Bit
+#CM_BGR10V2_PACKED               =   IS_CM_BGR10V2_PACKED         # occupies 32 Bit
 
 # CM_YUV422_PACKED                =   IS_CM_YUV422_PACKED         #no compliant version      
 CM_UYVY_PACKED                  =   IS_CM_UYVY_PACKED                               # occupies 16 Bit
