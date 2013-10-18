@@ -197,9 +197,9 @@ cdef class Cam:
         #cdef HWND hWnd
         rv=is_InitCamera(&cid, NULL)
         #IS_SUCCESS
-        self.CheckNoSuccess(rv)
         if rv==IS_STARTER_FW_UPLOAD_NEEDED:
             raise Exception("The camera's starter firmware is not compatible with the driver and needs to be updated.")
+        self.CheckNoSuccess(rv, "InitCamera")
         self.cid=cid
         self.LiveMode = False
         
@@ -277,6 +277,93 @@ cdef class Cam:
         rv=is_ExitCamera (self.cid)
         self.CheckNoSuccess(rv)            
        
+    def ReadEEPROM(self, raw=False):
+        ''' Read the 64-byte user data EEPROM from the camera.
+
+        Syntax:
+        =======
+
+        eeprom = cam.ReadEEPROM([raw])
+
+        
+        Input Parameters:
+        =================
+
+        raw:    True to return a 64-element list of the eeprom bytes.
+                False (default) to return a friendly python 'bytes' string up to
+                the first null-terminator.
+
+        Return Value:
+        =============
+
+        eeprom: Depending on "raw" parameter, either a list or a 'bytes' string
+                containing the user EEPROM.
+
+        '''
+
+        cdef char *c_eeprom = <char*>calloc( 64, sizeof(char) )
+        cdef bytes py_eeprom
+        rv = is_ReadEEPROM( self.cid, 0, c_eeprom, 64 )
+        self.CheckNoSuccess(rv, "ReadEEPROM")
+        if raw: 
+            raw_eeprom = [0]*64
+            for i in range(64):
+                raw_eeprom[i] = c_eeprom[i]
+            return raw_eeprom
+        else:
+            py_eeprom = c_eeprom
+            #stdlib.free(c_eeprom)
+            return py_eeprom
+    
+    def WriteEEPROM(self, data, INT addr = 0, INT count = 0):
+        ''' Write to the 64-byte user data EEPROM on the camera.
+
+        Syntax:
+        =======
+
+        cam.WriteEEPROM(data, [addr])
+
+        
+        Input Parameters:
+        =================
+
+        data:   Either a 'bytes' string or a list of ints or chars.
+        addr:   Start byte for write. 0 (default) to start at beginning.
+        count:  Number of bytes to write. 0 (default) to write all of 'data'.
+                If count > len(data), EEPROM is padded with zeroes. 
+                Use 64 to ensure no remnants are left over.  
+
+        Notes:
+        =============
+
+        If len(data) + addr is greater than 64, or if communication breaks down,
+        or if data contains something other than chars and integers,
+        an exception is thrown.
+        If 'data' is a string, it will be zero-terminated in EEPROM.
+        '''
+
+        if count == 0:
+            count = len(data)
+            # Zero-terminate if it's a string:
+            if type(data) == str:
+                count += 1
+
+        if count + addr > 64:
+            raise Exception( "Attempted to write past end of 64-byte EEPROM." )
+
+        cdef char *c_eeprom = <char*>calloc( 64, sizeof(char) )
+        for i in range(count):
+            if i < len(data):
+                d = data[i]
+                if type(d) == str:
+                    d = ord(d)
+            else:
+                d = 0
+            if type(d) != int:
+                raise Exception( "Data must contain only chars or ints. data[%d] = %s" % (i, d) )
+            c_eeprom[i] = d
+        rv = is_WriteEEPROM( self.cid, addr, c_eeprom, count )
+        self.CheckNoSuccess(rv, "writeEEPROM")
     
     def WaitEvent(self, INT which, INT timeout):
         ''' Wait for a uEye event.
@@ -3000,8 +3087,7 @@ cdef class Cam:
 #LoadImage
 #LoadImageMem
 #LoadParameters
-#LockSeqBuf
-#ReadEEPROM
+#LockSeqBuf -> Called by GrabImage
 #ReadI2C
 #RenderBitmap ---- windows
 #ResetCaptureErrorInfo
@@ -3016,7 +3102,6 @@ cdef class Cam:
 #SetCameraLUT
 #SetDisplayMode --- windows
 #SetDisplayPos  ----windows
-#SetErrorReport  
 #SetFlashDelay
 #SetFlashStrobe
 #SetHdrKneepoints   
@@ -3033,6 +3118,5 @@ cdef class Cam:
 #SetStarterFirmware
 #SetTriggerCounter
 #SetTriggerDelay
-#UnlockSeqBuf
-#WriteEEPROM
+#UnlockSeqBuf -> used in GrabImage and UnlockLastBuf
 #WriteI2C
