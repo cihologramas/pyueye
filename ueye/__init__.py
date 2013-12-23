@@ -31,4 +31,4 @@
 #
 # Author: Ricardo Amézquita Orozco <ramezquitao@cihologramas.com>
 from ueye import *
-from constants import *
+from ueyeh import *

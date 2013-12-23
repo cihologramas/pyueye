@@ -1,3 +1,6 @@
+#!python
+#cython: embedsignature=True
+
 # Copyright (c) 2010, Combustion Ingenieros Ltda.
 # All rights reserved.
 #       Redistribution and use in source and binary forms, with or without
@@ -34,7 +37,183 @@ from stdlib cimport *
 from python_cobject cimport *
 import numpy as npy
 cimport numpy as npy
+from ueyeh cimport *
+#~ from ueyeh import *
 from sys import stderr
+cimport cython
+
+
+
+###Dictionary with the allowed AOI parameters for the different sensors
+### Note may not be complete. It is used in the AOI setting to adjust the 
+### parameters to the allowed values. The content of the dict are:
+## MinWidth,MaxWidth,WidthStep,MinHeigth,MaxHeight,HeightStep,PosGridHoriz,PosGridVert
+
+cdef dict AOIinfo={\
+            #IS_SENSOR_UI141X_M          
+            #IS_SENSOR_UI141X_C          
+            #IS_SENSOR_UI144X_M          
+            #IS_SENSOR_UI144X_C          
+
+            c_IS_SENSOR_UI154X_M: (32, 1280,4,4,1024,2,4,2),          
+            #IS_SENSOR_UI154X_C          
+            #IS_SENSOR_UI145X_C          
+
+            #IS_SENSOR_UI146X_C          
+            #IS_SENSOR_UI148X_M          
+            #IS_SENSOR_UI148X_C          
+
+            #IS_SENSOR_UI121X_M          
+            #IS_SENSOR_UI121X_C          
+            #IS_SENSOR_UI122X_M          
+            #IS_SENSOR_UI122X_C          
+
+            #IS_SENSOR_UI164X_C          
+
+            #IS_SENSOR_UI155X_C          
+
+            #IS_SENSOR_UI1223_M          
+            #IS_SENSOR_UI1223_C          
+
+            #IS_SENSOR_UI149X_M          
+            #IS_SENSOR_UI149X_C          
+
+            #IS_SENSOR_UI1225_M          
+            #IS_SENSOR_UI1225_C          
+
+            c_IS_SENSOR_UI1645_C:  (32, 1280,4,4,1024,2,4,2),       
+            #IS_SENSOR_UI1555_C          
+            c_IS_SENSOR_UI1545_M:  (32, 1280,4,4,1024,2,4,2),       
+            #IS_SENSOR_UI1545_C          
+            #IS_SENSOR_UI1455_C          
+            #IS_SENSOR_UI1465_C          
+            #IS_SENSOR_UI1485_M          
+            #IS_SENSOR_UI1485_C          
+            #IS_SENSOR_UI1495_M          
+            #IS_SENSOR_UI1495_C          
+
+            #IS_SENSOR_UI112X_M          
+            #IS_SENSOR_UI112X_C          
+
+            #IS_SENSOR_UI1008_M          
+            #IS_SENSOR_UI1008_C          
+
+            #IS_SENSOR_UIF005_M           
+            #IS_SENSOR_UIF005_C           
+
+            #IS_SENSOR_UI1005_M           
+            #IS_SENSOR_UI1005_C          
+
+            #IS_SENSOR_UI1240_M          
+            #IS_SENSOR_UI1240_C          
+            #IS_SENSOR_UI1240_NIR        
+
+            #IS_SENSOR_UI1240LE_M        
+            #IS_SENSOR_UI1240LE_C        
+            #IS_SENSOR_UI1240LE_NIR      
+
+            #IS_SENSOR_UI1240ML_M        
+            #IS_SENSOR_UI1240ML_C        
+            #IS_SENSOR_UI1240ML_NIR      
+
+            #IS_SENSOR_UI1243_M_SMI      
+            #IS_SENSOR_UI1243_C_SMI      
+
+            #IS_SENSOR_UI1543_M          
+            #IS_SENSOR_UI1543_C          
+
+            #IS_SENSOR_UI1544_M          
+            #IS_SENSOR_UI1544_C          
+            #IS_SENSOR_UI1543_M_WO       
+            #IS_SENSOR_UI1543_C_WO       
+            #IS_SENSOR_UI1453_C          
+            #IS_SENSOR_UI1463_C          
+            #IS_SENSOR_UI1483_M          
+            #IS_SENSOR_UI1483_C          
+            #IS_SENSOR_UI1493_M          
+            #IS_SENSOR_UI1493_C          
+
+            #IS_SENSOR_UI1463_M_WO       
+            #IS_SENSOR_UI1463_C_WO       
+
+            #IS_SENSOR_UI1553_C_WN       
+            #IS_SENSOR_UI1483_M_WO       
+            #IS_SENSOR_UI1483_C_WO       
+
+            #IS_SENSOR_UI1580_M          
+            #IS_SENSOR_UI1580_C          
+            #IS_SENSOR_UI1580LE_M        
+            #IS_SENSOR_UI1580LE_C        
+
+            #IS_SENSOR_UI1360M           
+            #IS_SENSOR_UI1360C           
+            #IS_SENSOR_UI1360NIR         
+
+            #IS_SENSOR_UI1370M           
+            #IS_SENSOR_UI1370C           
+            #IS_SENSOR_UI1370NIR         
+
+            #IS_SENSOR_UI1250_M          
+            #IS_SENSOR_UI1250_C          
+            #IS_SENSOR_UI1250_NIR        
+
+            #IS_SENSOR_UI1250LE_M        
+            #IS_SENSOR_UI1250LE_C        
+            #IS_SENSOR_UI1250LE_NIR      
+
+            #IS_SENSOR_UI1250ML_M        
+            #IS_SENSOR_UI1250ML_C        
+            #IS_SENSOR_UI1250ML_NIR      
+
+            #IS_SENSOR_XS                
+
+            #IS_SENSOR_UI1493_M_AR       
+            #IS_SENSOR_UI1493_C_AR       
+            #IS_SENSOR_UI223X_M          
+            #IS_SENSOR_UI223X_C          
+
+            #IS_SENSOR_UI241X_M          
+            #IS_SENSOR_UI241X_C          
+
+            #IS_SENSOR_UI234X_M          
+            #IS_SENSOR_UI234X_C          
+
+            #IS_SENSOR_UI221X_M          
+            #IS_SENSOR_UI221X_C          
+
+            #IS_SENSOR_UI231X_M          
+            #IS_SENSOR_UI231X_C          
+
+            #IS_SENSOR_UI222X_M          
+            #IS_SENSOR_UI222X_C          
+
+            #IS_SENSOR_UI224X_M          
+            #IS_SENSOR_UI224X_C          
+
+            #IS_SENSOR_UI225X_M          
+            #IS_SENSOR_UI225X_C          
+
+            #IS_SENSOR_UI214X_M          
+            #IS_SENSOR_UI214X_C          
+
+            #IS_SENSOR_UI228X_M          
+            #IS_SENSOR_UI228X_C          
+
+            #IS_SENSOR_UI241X_M_R2       
+            #IS_SENSOR_UI251X_M          
+            #IS_SENSOR_UI241X_C_R2       
+            #IS_SENSOR_UI251X_C          
+
+            #IS_SENSOR_UI2130_M          
+            #IS_SENSOR_UI2130_C 
+            }         
+
+
+cdef inline npy.ndarray zero_mat( int M, int N ):
+    cdef npy.npy_intp length[2]
+    length[0] = M; length[1] = N
+    npy.Py_INCREF( npy.NPY_DOUBLE ) # This is apparently necessary
+    return npy.PyArray_ZEROS( 2, length, npy.NPY_DOUBLE, 0 )
 
 def GetNumberOfCameras():
     '''Returns the number of connected cams
@@ -114,16 +293,16 @@ def bitspixel(colormode):
     bpp:
         Bits per pixel corresponding to the given colormode
     '''
-    if colormode==IS_CM_MONO8:
+    if colormode==c_IS_CM_MONO8:
         return 8
-    elif colormode==IS_CM_MONO12        or colormode==IS_CM_MONO16        \
-      or colormode==IS_CM_BGR565_PACKED \
-      or colormode==IS_CM_UYVY_PACKED   or colormode==IS_CM_CBYCRY_PACKED:
+    elif colormode==c_IS_CM_MONO12        or colormode==c_IS_CM_MONO16        \
+      or colormode==c_IS_CM_BGR565_PACKED \
+      or colormode==c_IS_CM_UYVY_PACKED   or colormode==c_IS_CM_CBYCRY_PACKED:
         return 16
-    elif colormode==IS_CM_RGB8_PACKED or colormode==IS_CM_BGR8_PACKED:
+    elif colormode==c_IS_CM_RGB8_PACKED or colormode==c_IS_CM_BGR8_PACKED:
         return 24
-    elif colormode==IS_CM_RGBA8_PACKED or colormode==IS_CM_BGRA8_PACKED   \
-      or colormode==IS_CM_RGBY8_PACKED or colormode==IS_CM_BGRY8_PACKED:
+    elif colormode==c_IS_CM_RGBA8_PACKED or colormode==c_IS_CM_BGRA8_PACKED   \
+      or colormode==c_IS_CM_RGBY8_PACKED or colormode==c_IS_CM_BGRY8_PACKED:
         return 32;
     else: return 8
 
@@ -151,11 +330,11 @@ def SetErrorReport(enable):
     '''
 
     if enable:
-        mode = IS_ENABLE_ERR_REP
+        mode = c_IS_ENABLE_ERR_REP
     else:
-        mode = IS_DISABLE_ERR_REP
+        mode = c_IS_DISABLE_ERR_REP
     rv= is_SetErrorReport (0, mode)
-    if rv != IS_SUCCESS:
+    if rv != c_IS_SUCCESS:
         raise Exception("Error setting ErrorReporting. API returned %d" % rv)
     
 npy.import_array() 
@@ -185,27 +364,38 @@ cdef class Cam:
     cdef int BufCount
     cdef int *BufIds
     cdef char *LastSeqBuf
+    cdef char *LastSeqBuf1
+    cdef char LastSeqBufLocked
     cdef public HIDS cid
+    cdef public INT nMaxWidth,nMaxHeight,nColorMode, colormode
     cdef public object SerNo,ID,Version,Date,Select,SensorID,strSensorName, \
-            nColorMode,nMaxWidth,nMaxHeight,bMasterGain, bRGain, bGGain, bBGain, \
-            bGlobShutter, bitspixel, colormode
+            bMasterGain, bRGain, bGGain, bBGain, \
+            bGlobShutter, bitspixel
     cdef public INT LineInc, 
     cdef public int ImgMemId
-    cdef int LiveMode
+    cdef public int LiveMode
+    cdef INT AOIx0,AOIy0,AOIx1,AOIy1 ##Buffers to save the AOI to speed up the image grabbing
+    
         
     def __init__(self, HIDS cid=0, int bufCount=3):
-        #cdef HWND hWnd
+    
+    
         rv=is_InitCamera(&cid, NULL)
-        #IS_SUCCESS
-        if rv==IS_STARTER_FW_UPLOAD_NEEDED:
+        self.CheckNoSuccess(rv,"Error in Cam.__init__. Could not init the camera")
+
+        if rv==c_IS_STARTER_FW_UPLOAD_NEEDED:
             raise Exception("The camera's starter firmware is not compatible with the driver and needs to be updated.")
-        self.CheckNoSuccess(rv, "InitCamera")
+        
         self.cid=cid
+        
+        ##If True, the camera is in livemode, this is any change in the image 
+        ##is visible in the image buffer in realtime (no need to grab)
+         
         self.LiveMode = False
         
         cdef CAMINFO cInfo
         rv =is_GetCameraInfo(self.cid, &cInfo)
-        self.CheckNoSuccess(rv)
+        self.CheckNoSuccess(rv,"Error in Cam.__init__. Could not get camera info")
         
         self.SerNo=cInfo.SerNo
         self.ID=cInfo.ID
@@ -217,7 +407,7 @@ cdef class Cam:
         cdef SENSORINFO sInfo
         rv=is_GetSensorInfo(self.cid, &sInfo)
         
-        self.CheckNoSuccess(rv)
+        self.CheckNoSuccess(rv,"Error in Cam.__init__. Could not get sensor info")
         
         self.SensorID=sInfo.SensorID            # e.g. IS_SENSOR_UI224X_C
         self.strSensorName=<char*>sInfo.strSensorName  # e.g. "UI-224X-C"
@@ -233,79 +423,328 @@ cdef class Cam:
         cdef int pid
         
         # Check if the cam is color or bw
-        if self.nColorMode == IS_COLORMODE_BAYER:
-            colormode= IS_CM_BGR8_PACKED
-        elif self.nColorMode == IS_COLORMODE_MONOCHROME:
-            colormode= IS_CM_MONO8
+        if self.nColorMode == c_IS_COLORMODE_BAYER:
+            colormode= c_IS_CM_BGR8_PACKED
+        elif self.nColorMode == c_IS_COLORMODE_MONOCHROME:
+            colormode= c_IS_CM_MONO8
         else:
             raise Exception("Colormode not supported")
         
         
         #Set colormode and assign image memory. The image memory assigment is done 
         #in SetColorMode
-        #self.Img=<char *>NULL
+    
         self.BufCount = bufCount
         self.BufIds = <int *>calloc(bufCount, sizeof(int))
         self.Imgs = <char **>calloc(bufCount, sizeof(char*))
         self.SetColorMode (colormode)    
+    
+        rv=is_SetExternalTrigger (self.cid, c_IS_SET_TRIGGER_OFF)
+        self.CheckNoSuccess(rv, "Error in Cam.__init__. Could not set trigger")
         
+        rv=is_FreezeVideo (self.cid, c_IS_WAIT)
+        self.CheckNoSuccess(rv, "Error in Cam.__init__. Could not Freeze video")
         
-        
-        rv=is_SetExternalTrigger (self.cid, IS_SET_TRIGGER_OFF)
-        self.CheckNoSuccess(rv)
-        
-        rv=is_FreezeVideo (self.cid, IS_WAIT)
-        self.CheckNoSuccess(rv)
         
         # Enable FRAME events to make video capturing easier:
-        is_EnableEvent(self.cid, IS_SET_EVENT_FRAME);
-        is_InitEvent(self.cid, NULL, IS_SET_EVENT_FRAME);
+        self.CheckNoSuccess(is_EnableEvent(self.cid, c_IS_SET_EVENT_FRAME),\
+                            "Error in Cam.__init__. Could not enable frame event")
+        
+        #according to the ueye manual V 4.31 The init event is not used in linux
+        #just in Windows
+        
+        #self.CheckNoSuccess(is_InitEvent(self.cid, NULL, c_IS_SET_EVENT_FRAME),\
+        #                    "Error in Cam.__init__. Could not init frame event")
+        
         
         #Start with auto BL_Compensation off by default if possible
+        try:
+            self.AutoBlackLevel=False
+            self.BlackLevelOffset=0
+        except AttributeError:
+            pass
+            
+        self.LastSeqBuf=NULL
+        self.LastSeqBufLocked=False
         
-        rv=self.SetBlCompensation(IS_GET_BL_SUPPORTED_MODE, 0)
-
-        if rv & IS_BL_COMPENSATION_OFFSET:
-            self.SetBlCompensation(IS_BL_COMPENSATION_DISABLE, 0)
+        ##Save the initial AOI this is used to speed up the GrabImage when using
+        ##AOI=True
+        self.AOIx0,self.AOIy0,w,h=self.AOI
+        self.AOIx1=self.AOIx0+w
+        self.AOIy1=self.AOIy0+h
+        
 
     def __dealloc__(self):
         
         for i in range(self.BufCount):
             rv=is_FreeImageMem (self.cid, self.Imgs[i], self.BufIds[i])
             self.CheckNoSuccess(rv)
+
+        if self.cid:
+            rv=is_ExitCamera (self.cid)
+            self.CheckNoSuccess(rv)            
     
-        rv=is_ExitCamera (self.cid)
-        self.CheckNoSuccess(rv)            
-       
+    property AutoBlackLevel:
+        
+        def __get__(self):
+            """Get current blacklevel mode
+            """
+            
+            cdef INT rv, nMode
+            rv = is_Blacklevel(self.cid, c_IS_BLACKLEVEL_CMD_GET_MODE, <void*>&nMode, sizeof(nMode))
+            self.CheckNoSuccess(rv, "Couldn't get the AutoBlackLevel info")
+            return nMode==c_IS_AUTO_BLACKLEVEL_ON
+        
+        def __set__(self, value):
+            """Set the Auto Blacklevel parameter
+            """
+            assert value in (True,False), "AutoBlackLevel must be True or False"
+        
+            # Check if BL can be changed
+            cdef INT nBlacklevelCaps, rv, nMode
+            cdef BOOL bSetAutoBlacklevel, bSetBlacklevelOffset
+            rv = is_Blacklevel(self.cid, c_IS_BLACKLEVEL_CMD_GET_CAPS,
+                    <void*>&nBlacklevelCaps, sizeof(nBlacklevelCaps))
+
+            self.CheckNoSuccess(rv, "Couldn't get the BlackLevel caps")
+            
+            #Check if the user can changed the state of the auto blacklevel
+            bSetAutoBlacklevel = (nBlacklevelCaps & c_IS_BLACKLEVEL_CAP_SET_AUTO_BLACKLEVEL) != 0
+                
+            if not bSetAutoBlacklevel: raise AttributeError("The current camera does not support AutoBlackLevel settings")
+
+            #Set new BL mode 
+            nMode= c_IS_AUTO_BLACKLEVEL_ON if value else c_IS_AUTO_BLACKLEVEL_OFF
+
+            rv = is_Blacklevel(self.cid, c_IS_BLACKLEVEL_CMD_SET_MODE, <void*>&nMode , sizeof(nMode ));
+            self.CheckNoSuccess(rv, "Couldn't set the AutoBlackLevel")
+    
+    property BlackLevelOffset:
+        
+        def __get__(self):
+        
+            cdef INT rv, nMode
+            rv = is_Blacklevel(self.cid, c_IS_BLACKLEVEL_CMD_GET_OFFSET, <void*>&nMode, sizeof(nMode))
+            self.CheckNoSuccess(rv, "Couldn't get the AutoBlackLevel info")
+            return nMode
+        
+        def __set__(self, INT value):
+        
+            # Check if BL can be changed
+            cdef INT nBlacklevelCaps,rv
+            cdef BOOL bSetAutoBlacklevel, bSetBlacklevelOffset
+            rv = is_Blacklevel(self.cid, c_IS_BLACKLEVEL_CMD_GET_CAPS,
+                    <void*>&nBlacklevelCaps, sizeof(nBlacklevelCaps))
+
+            self.CheckNoSuccess(rv, "Couldn't get the BlackLevel caps")
+                
+            #The user can change the offset
+            bSetBlacklevelOffset = (nBlacklevelCaps & c_IS_BLACKLEVEL_CAP_SET_OFFSET) != 0
+            if not bSetBlacklevelOffset: raise AttributeError("The current camera does not support BlackLevelOffset settings")
+            
+
+            rv = is_Blacklevel(self.cid, c_IS_BLACKLEVEL_CMD_SET_OFFSET, <void*>&value, sizeof(value));
+            self.CheckNoSuccess(rv, "Couldn't set BlackLevelOffset")
+    
+    property PixelClock:
+        def __get__(self):
+            cdef UINT value
+            rv=is_PixelClock(self.cid, c_IS_PIXELCLOCK_CMD_GET, &value, sizeof(value))
+            self.CheckNoSuccess(rv)
+            return value
+            
+        def __set__(self, UINT value):
+            rv=is_PixelClock(self.cid, c_IS_PIXELCLOCK_CMD_SET, &value, sizeof(value))
+            self.CheckNoSuccess(rv)
+            #return rv
+    
+    property PixelClockRange:
+        def __get__(self):
+            
+            cdef UINT nRange[3]
+
+            #ZeroMemory(nRange, sizeof(nRange));
+
+            cdef rv = is_PixelClock(self.cid, c_IS_PIXELCLOCK_CMD_GET_RANGE, <void*>  nRange, sizeof(nRange))
+            self.CheckNoSuccess(rv)
+            return nRange[0],nRange[1],nRange[2]
+    
+    property ExposureTime:
+        def __set__(self,double expo):
+            rv= is_Exposure (self.cid, c_IS_EXPOSURE_CMD_SET_EXPOSURE, &expo, sizeof(double))
+            self.CheckNoSuccess(rv)
+        
+        def __get__(self):
+            cdef double nexpo
+            rv= is_Exposure (self.cid, c_IS_EXPOSURE_CMD_GET_EXPOSURE, &nexpo, sizeof(double))
+            self.CheckNoSuccess(rv)
+            return nexpo
+            
+    property ExposureTimeRange:
+        def __get__(self):
+            cdef double dblRange[3]
+            cdef INT rv
+ 
+            rv = is_Exposure(self.cid, c_IS_EXPOSURE_CMD_GET_EXPOSURE_RANGE,<void*>dblRange, sizeof(dblRange))
+            self.CheckNoSuccess(rv)
+            
+            return dblRange[0],dblRange[1],dblRange[2]
+
+    
+    
+    property AOI:
+        def __set__(self,value):
+            ''' Set the area of interest
+            XPos, YPos, Width, Height
+            The AOI values are adjusted to fit the values allowed by the sensor
+            and may not be equal to the given in 'value'
+            '''
+            
+            
+            cdef IS_RECT rectAOI
+            rectAOI.s32X,rectAOI.s32Y,rectAOI.s32Width,rectAOI.s32Height = value
+            
+            ##Get the valid AOI params. If key error is raised, a valid entry in 
+            ##the dict AOIinfo must be included
+            try:
+                MinW,MaxW,WStep,MinH,MaxH,HStep,PGHor,PGVer=AOIinfo[self.SensorID]
+            except KeyError:
+                #raise KeyError("The current camera is not defined in the AOIinfo dict")
+                print "Pyueye Warning: The current camera is not defined in the AOIinfo dict."
+                print "Using default AOI constraints. Hope they work."
+                MinW,MaxW,WStep,MinH,MaxH,HStep,PGHor,PGVer = (32, 1280,4,4,1024,2,4,2)
+            #Check values are on the correct grid positions
+            rectAOI.s32X= <int>(rectAOI.s32X/PGHor)*PGHor
+            rectAOI.s32Y= <int>(rectAOI.s32Y/PGVer)*PGVer
+            
+            #Check the correct values for width and height
+            rectAOI.s32Width=<int>(rectAOI.s32Width/WStep)*WStep
+            rectAOI.s32Height=<int>(rectAOI.s32Height/HStep)*HStep
+            
+            if rectAOI.s32Width < MinW:rectAOI.s32Width=MinW
+            if rectAOI.s32Width > MaxW:rectAOI.s32Width=MaxW
+            if rectAOI.s32Height < MinH:rectAOI.s32Height=MinH
+            if rectAOI.s32Height > MaxH:rectAOI.s32Height=MaxH
+            
+            
+            ##Config the AOI so it is shown in the absolute position
+            #rectAOI.s32X|=c_IS_AOI_IMAGE_POS_ABSOLUTE
+            #rectAOI.s32Y|=c_IS_AOI_IMAGE_POS_ABSOLUTE
+            rv=is_AOI (self.cid, c_IS_AOI_IMAGE_SET_AOI, &rectAOI, sizeof(rectAOI))
+            self.CheckNoSuccess(rv)
+            ##Save the current AOI
+            self.AOIx0,self.AOIy0,w,h=self.AOI
+            self.AOIx1=self.AOIx0+w
+            self.AOIy1=self.AOIy0+h
+            
+            if self.AOI != value: 
+                print >> stderr, "The value passed to set the AOI is invalid for the current sensor."
+                print >> stderr,"The current AOI value is {}".format(self.AOI)
+
+        def __get__(self):
+            cdef IS_RECT rectAOI           
+            rv=is_AOI (self.cid, c_IS_AOI_IMAGE_GET_AOI, &rectAOI, sizeof(rectAOI))
+            self.CheckNoSuccess(rv)
+            return rectAOI.s32X,rectAOI.s32Y,rectAOI.s32Width,rectAOI.s32Height
+            
+    property FrameRate:
+        def __set__(self,double value):
+            
+            cdef double nvalue
+            rv=is_SetFrameRate(self.cid,value,&nvalue)
+        
+        
+        def __get__(self):
+            cdef double nvalue
+            rv=is_SetFrameRate(self.cid,c_IS_GET_FRAMERATE,&nvalue)
+            return nvalue 
+            
+    property FrameTimeRange:
+        def __get__(self):
+            '''Returns the frame rate settings
+            
+            Using FrameTimeRange(), you can read out the frame rate settings 
+            which are available for the current pixel clock setting. 
+            The returned values indicate the minimum and maximum frame duration 
+            in seconds. You can set the frame duration between min and max 
+            in increments defined by the intervall parameter.
+        
+            Syntax:
+            =======
+            
+            min,max,intervall= cam.FrameTimeRange
+               
+            Return Values:
+            ==============
+          
+            min: 
+                Minimum available frame duration.
+
+            max:
+                Maximum available frame duration.
+
+            intervall: 
+               Increment you can use to change the frame duration.
+            
+            '''
+            
+            cdef double min,max,intervall
+            rv=is_GetFrameTimeRange (self.cid, &min, &max, &intervall)
+            self.CheckNoSuccess(rv)
+            return (min,max,intervall)
+    
+    property Gamma:
+        ''' Set gamma correction
+        
+        Gamma sets the value for digital gamma correction 
+        (brighten dark image portions by applying a non-linear characteristic (LUT)). 
+        Valid values are in the range between 0.01 and 10.
+    
+        
+        GET_GAMMA: Returns the current setting.
+        
+        Return Value:
+        =============
+            SUCCESS: Function executed successfully
+        
+            Current setting when used together with GET_GAMMA        
+        '''
+        def __set__(self,double value):
+ 
+            cdef int g=<int>(100*value)
+            if g<0: g=1
+            if g>1000: g=1000
+            
+            rv=is_SetGamma (self.cid, g)
+            self.CheckNoSuccess(rv)
+        
+        def __get__(self):
+            return is_SetGamma (self.cid, c_IS_GET_GAMMA)/100.
+            
     def ReadEEPROM(self, raw=False):
         ''' Read the 64-byte user data EEPROM from the camera.
 
         Syntax:
         =======
-
         eeprom = cam.ReadEEPROM([raw])
 
         
         Input Parameters:
         =================
-
         raw:    True to return a 64-element list of the eeprom bytes.
                 False (default) to return a friendly python 'bytes' string up to
                 the first null-terminator.
 
         Return Value:
         =============
-
         eeprom: Depending on "raw" parameter, either a list or a 'bytes' string
                 containing the user EEPROM.
-
         '''
-
         cdef char *c_eeprom = <char*>calloc( 64, sizeof(char) )
         cdef bytes py_eeprom
         rv = is_ReadEEPROM( self.cid, 0, c_eeprom, 64 )
         self.CheckNoSuccess(rv, "ReadEEPROM")
-        if raw: 
+        if raw:
             raw_eeprom = [0]*64
             for i in range(64):
                 raw_eeprom[i] = c_eeprom[i]
@@ -314,19 +753,15 @@ cdef class Cam:
             py_eeprom = c_eeprom
             #stdlib.free(c_eeprom)
             return py_eeprom
-    
     def WriteEEPROM(self, data, INT addr = 0, INT count = 0):
         ''' Write to the 64-byte user data EEPROM on the camera.
 
         Syntax:
         =======
-
         cam.WriteEEPROM(data, [addr])
-
         
         Input Parameters:
         =================
-
         data:   Either a 'bytes' string or a list of ints or chars.
         addr:   Start byte for write. 0 (default) to start at beginning.
         count:  Number of bytes to write. 0 (default) to write all of 'data'.
@@ -335,7 +770,6 @@ cdef class Cam:
 
         Notes:
         =============
-
         If len(data) + addr is greater than 64, or if communication breaks down,
         or if data contains something other than chars and integers,
         an exception is thrown.
@@ -364,7 +798,9 @@ cdef class Cam:
             c_eeprom[i] = d
         rv = is_WriteEEPROM( self.cid, addr, c_eeprom, count )
         self.CheckNoSuccess(rv, "writeEEPROM")
-    
+        
+        
+            
     def WaitEvent(self, INT which, INT timeout):
         ''' Wait for a uEye event.
 
@@ -425,7 +861,7 @@ cdef class Cam:
         '''
 
         rv = is_WaitEvent(self.cid, which, timeout)
-        if rv != IS_TIMED_OUT:
+        if rv != c_IS_TIMED_OUT:
             self.CheckNoSuccess(rv, "WaitEvent")
         return rv
 
@@ -485,28 +921,50 @@ cdef class Cam:
         '''
 
         if reset:
-            command = IS_CAPTURE_STATUS_INFO_CMD_RESET
+            command = c_IS_CAPTURE_STATUS_INFO_CMD_RESET
         else:
-            command = IS_CAPTURE_STATUS_INFO_CMD_GET
+            command = c_IS_CAPTURE_STATUS_INFO_CMD_GET
 
         cdef UEYE_CAPTURE_STATUS_INFO status
         rv = is_CaptureStatus(self.cid, command, &status, sizeof(status))
         self.CheckNoSuccess(rv)
 
         return {"Total": status.dwCapStatusCnt_Total,
-            "API_NO_DEST_MEM": status.adwCapStatusCnt_Detail[IS_CAP_STATUS_API_NO_DEST_MEM],
-            "API_CONVERSION_FAILED": status.adwCapStatusCnt_Detail[IS_CAP_STATUS_API_CONVERSION_FAILED],
-            "API_IMAGE_LOCKED": status.adwCapStatusCnt_Detail[IS_CAP_STATUS_API_IMAGE_LOCKED],
-            "DRV_OUT_OF_BUFFERS": status.adwCapStatusCnt_Detail[IS_CAP_STATUS_DRV_OUT_OF_BUFFERS],
-            "DRV_DEVICE_NOT_READY": status.adwCapStatusCnt_Detail[IS_CAP_STATUS_DRV_DEVICE_NOT_READY],
-            "USB_TRANSFER_FAILED": status.adwCapStatusCnt_Detail[IS_CAP_STATUS_USB_TRANSFER_FAILED],
-            "DEV_TIMEOUT": status.adwCapStatusCnt_Detail[IS_CAP_STATUS_DEV_TIMEOUT],
-            "ETH_BUFFER_OVERRUN": status.adwCapStatusCnt_Detail[IS_CAP_STATUS_ETH_BUFFER_OVERRUN],
-            "ETH_MISSED_IMAGES": status.adwCapStatusCnt_Detail[IS_CAP_STATUS_ETH_MISSED_IMAGES],
+            "API_NO_DEST_MEM": status.adwCapStatusCnt_Detail[c_IS_CAP_STATUS_API_NO_DEST_MEM],
+            "API_CONVERSION_FAILED": status.adwCapStatusCnt_Detail[c_IS_CAP_STATUS_API_CONVERSION_FAILED],
+            "API_IMAGE_LOCKED": status.adwCapStatusCnt_Detail[c_IS_CAP_STATUS_API_IMAGE_LOCKED],
+            "DRV_OUT_OF_BUFFERS": status.adwCapStatusCnt_Detail[c_IS_CAP_STATUS_DRV_OUT_OF_BUFFERS],
+            "DRV_DEVICE_NOT_READY": status.adwCapStatusCnt_Detail[c_IS_CAP_STATUS_DRV_DEVICE_NOT_READY],
+            "USB_TRANSFER_FAILED": status.adwCapStatusCnt_Detail[c_IS_CAP_STATUS_USB_TRANSFER_FAILED],
+            "DEV_TIMEOUT": status.adwCapStatusCnt_Detail[c_IS_CAP_STATUS_DEV_TIMEOUT],
+            "ETH_BUFFER_OVERRUN": status.adwCapStatusCnt_Detail[c_IS_CAP_STATUS_ETH_BUFFER_OVERRUN],
+            "ETH_MISSED_IMAGES": status.adwCapStatusCnt_Detail[c_IS_CAP_STATUS_ETH_MISSED_IMAGES],
             }
-            
 
-    def GrabImage(self, BGR=False, Timeout=500, LeaveLocked=False):
+    cdef char * GetNextBuffer(self, timeout=1000):
+        """ Get the next valid image buffer
+        
+            Returns NULL if timeout is reached.
+        """
+        
+        cdef char * img
+        cdef int rv
+        cdef int tries=0
+        
+        # Wait for the event to come in:
+        rv= is_WaitEvent(self.cid, c_IS_SET_EVENT_FRAME, timeout);
+        if rv == c_IS_TIMED_OUT:
+            #print "pyueye: GetNextBuffer's WaitEvent timed out."
+            return NULL
+        self.CheckNoSuccess(rv, "GetNextBuffer WaitEvent")
+
+        # Grab the image:
+        rv= is_GetImageMem(self.cid, <VOID**> &img)
+        self.CheckNoSuccess(rv, "GetImageMem") 
+        
+        return img
+
+    def GrabImage(self, BGR=False, UINT Timeout=500, LeaveLocked=False, char AOI=False):
         '''Grabs and reads an image from the camera and returns a numpy array
 
         By default, returns color images in RGB order for backwards compatibility.
@@ -515,6 +973,9 @@ cdef class Cam:
         When using Live mode, it is highly recommended to use LeaveLocked=True,
         so that the frame you are using doesn't get overwritten by the driver.
         The frame will be unlocked on the next call to GrabImage, or by UnlockLastBuf.
+
+        TODO: The AOI thing doesn't currently work because the cam.AOI property doesn't
+              set absolute mode. Need to work out a way to do that.
         
         Syntax:
         =======
@@ -537,6 +998,9 @@ cdef class Cam:
             won't overwrite the data in Live mode. It is recommended to use True
             if you are using Live mode. Default is False for back-compatibility.
             The buffer will be unlocked on the next call to GrabImage.
+        AOI:
+            When True, the returned data will have the AOI shape if not the whole
+            image buffer will be returned. NOTE: Currently this does nothing.
 
         Return Value:
         =============
@@ -557,79 +1021,41 @@ cdef class Cam:
         # If we are supposed to be in Live Mode, make sure we still are:
         if (self.LiveMode and not self.IsLive()):
             print >> stderr, "Camera dropped out of Live mode. Re-starting..."
-            self.CaptureVideo(IS_WAIT)
+            self.CaptureVideo(c_IS_WAIT)
 
         # If we aren't in Live mode, kick off a single capture:
         if (not self.LiveMode):
-            #rv= is_FreezeVideo (self.cid, IS_WAIT)
-            #print "Not Live. Grabbing frame."
             rv= is_FreezeVideo (self.cid, Timeout)
             self.CheckNoSuccess(rv)
 
-        # This will return if there was already a frame, or wait for the next one:
-        #rv= is_WaitEvent(self.cid, IS_SET_EVENT_FRAME, Timeout);
-        #if (rv == IS_TIMED_OUT):
-        #    print "Timed out waiting for frame."
-        #    return 0
-        #self.CheckNoSuccess(rv)
-
-        # This is the API's recommended method, but it is unstable:
-        # Grab the oldest image from the queue:
-        #cdef char * img
-        #cdef INT imgId = 0
-        #rv= is_WaitForNextImage(self.cid, Timeout, &img, &imgId) 
-        #print "rv: %d, imgId: %d, Buffer: %d" % (rv, imgId, <int>img)
-        #if (rv == IS_TIMED_OUT):
-        #    print "Timed out."
-        #    self.CheckNoSuccess(rv)
-        #    return 0
-        #elif (rv != IS_SUCCESS):
-        #    print "WaitForNextImage failed. Trying to recover with GetImageMem"
-        #    rv= is_GetImageMem(self.cid, <VOID**> &img)
-        #    self.CheckNoSuccess(rv)
-        #    rv= is_LockSeqBuf(self.cid, IS_IGNORE_PARAMETER, img)
-        #    self.CheckNoSuccess(rv)
         cdef char * img
-        rv= is_GetImageMem(self.cid, <VOID**> &img)
-        #print "GetImageMem - rv: %d, Buffer: %d" % (rv, <int>img)
-        self.CheckNoSuccess(rv, "First GetImageMem") 
-        # If the image hasn't updated since last time, wait for it:
-        if (img == self.LastSeqBuf):
-            # This WaitEvent call is only to see if one is already waiting:
-            rv= is_WaitEvent(self.cid, IS_SET_EVENT_FRAME, 1);
-            # Make sure that actually worked (WaitEvent will often refer to the last one)
-            rv= is_GetImageMem(self.cid, <VOID**> &img)
-            #print "GetImageMem - rv: %d, Buffer: %d" % (rv, <int>img)
-            self.CheckNoSuccess(rv, "Second GetImageMem")
-            if (img == self.LastSeqBuf):
-                rv= is_WaitEvent(self.cid, IS_SET_EVENT_FRAME, Timeout);
-                #print "WaitEvent - rv: %d" % (rv)
-                # Make sure that actually worked:
-                rv= is_GetImageMem(self.cid, <VOID**> &img)
-                #print "GetImageMem - rv: %d, Buffer: %d" % (rv, <int>img)
-                self.CheckNoSuccess(rv, "Third GetImageMem")
-                if (img == self.LastSeqBuf):
-                    #raise Exception("Timed out trying to retrieve frame.")
-                    return 0
+        
+        # Wait for new frame to come in:
+        img=self.GetNextBuffer(Timeout)
 
+        if img == NULL:
+            # Must have timed out.
+            return 0
+        
         # Unlock previous buffer here, so there's no chance of overwrite.
-        if self.LastSeqBuf:
-            rv= is_UnlockSeqBuf(self.cid, IS_IGNORE_PARAMETER, self.LastSeqBuf)
-            if rv != IS_SUCCESS:
+        if self.LastSeqBufLocked:
+            rv= is_UnlockSeqBuf(self.cid, c_IS_IGNORE_PARAMETER, self.LastSeqBuf)
+            if rv != c_IS_SUCCESS:
                 print >> stderr, "Buffer %d didn't unlock." % (<int>self.LastSeqBuf)
+            self.LastSeqBufLocked=False
 
         # Create a numpy memory mapping to the frame:
-        if self.colormode==IS_CM_RGB8_PACKED or self.colormode==IS_CM_BGR8_PACKED:
+        if self.colormode==c_IS_CM_RGB8_PACKED or self.colormode==c_IS_CM_BGR8_PACKED:
             dims3[0]=self.nMaxHeight
             dims3[1]=self.LineInc/3
             dims3[2]=3
             npy.Py_INCREF( npy.NPY_UINT8 )
             #data = npy.PyArray_SimpleNewFromData(3, dims3, npy.NPY_UINT8, self.Img)
             data = npy.PyArray_SimpleNewFromData(3, dims3, npy.NPY_UINT8, img)
-            if BGR != (self.colormode == IS_CM_BGR8_PACKED):
+            if BGR != (self.colormode == c_IS_CM_BGR8_PACKED):
                 data=data[:,:,::-1]
         
-        elif self.colormode==IS_CM_MONO8:
+        elif self.colormode==c_IS_CM_MONO8:
             dims3[0]=self.nMaxHeight
             dims3[1]=self.LineInc
             npy.Py_INCREF( npy.NPY_UINT8 )
@@ -641,12 +1067,17 @@ cdef class Cam:
 
         # Lock the buffer if requested:
         if LeaveLocked:
-            rv= is_LockSeqBuf(self.cid, IS_IGNORE_PARAMETER, img)
+            rv= is_LockSeqBuf(self.cid, c_IS_IGNORE_PARAMETER, img)
             self.CheckNoSuccess(rv)
-
+            self.LastSeqBufLocked=True
+        
         self.LastSeqBuf = img
-
+        
+        #if AOI:
+        #    return data[self.AOIy0:self.AOIy1,self.AOIx0:self.AOIx1]
+        #else:
         return data
+
     
     def UnlockLastBuf(self):
         '''Unlocks the last-used buffer in the ring buffer
@@ -666,86 +1097,11 @@ cdef class Cam:
         SUCCESS (or an exception will be thrown)
 
         '''
-        rv= is_UnlockSeqBuf(self.cid, IS_IGNORE_PARAMETER, self.LastSeqBuf)
+        rv= is_UnlockSeqBuf(self.cid, c_IS_IGNORE_PARAMETER, self.LastSeqBuf)
         #if rv != IS_SUCCESS:
         #    print "Buffer %d didn't unlock." % (<int>self.LastSeqBuf)
         self.CheckNoSuccess(rv)
 
-    def GetExposureRange(self):
-        '''Returns the exposure range parameters
-        
-        Using GetExposureRange(), you can query the exposure values 
-        (in milliseconds) available for the currently selected timing 
-        (pixel clock, frame rate). The available time values are 
-        comprised between min and max and can be set in increments 
-        defined by the intervall parameter.
-
-        Syntax:
-        =======
-        
-        min,max,interval=cam.GetExposureRange()
-        
-        
-        Return Value:
-        =============
-        
-        min: 
-            Minimum available exposure time
-        max:
-            Maximum available exposure time
-        interval:
-            Allowed increment
-                
-        '''
-
-        cdef double min,max,interval
-        rv= is_GetExposureRange (self.cid, &min, &max, &interval)
-        self.CheckNoSuccess(rv)
-
-        return (min,max,interval)
-    
-    def SetExposureTime(self,double expo):
-        '''Set the exposure time
-        
-        Using SetExposureTime(), you can set the exposure time 
-        (in milliseconds). Since this value depends on the sensor timing, 
-        the exposure time actually used may slightly deviate from the 
-        value set here. The actual exposure time is returned by the method. 
-        In free-running mode (CaptureVideo()),  any modification of the exposure
-        time will only become effective when the next image but one is captured. 
-        In trigger mode (SetExternalTrigger()), the modification  will be 
-        applied to the next image.
-
-        Syntax:
-        =======
-        
-        nexpo=cam.SetExposureTime(expo)
-        
-        Input Parameters:
-        =================
-        
-        expo: 
-            New desired exposure time.
-
-            For expo=0.0, the exposure time is 1/frame rate.
-
-            GET_EXPOSURE_TIME: Returns the current exposure.
-
-            GET_DEFAULT_EXPOSURE: Returns the default exposure time.
-
-            SET_ENABLE_AUTO_SHUTTER: Enables the auto exposure function.
-
-        Return Value:
-        =============
-        
-            nexpo
-                The exposure time actually set
-        '''
-                
-        cdef double nexpo
-        rv= is_SetExposureTime(self.cid, expo, &nexpo)
-        self.CheckNoSuccess(rv)
-        return nexpo
     
     def GetFramesPerSecond(self):
         '''Return the frames per second
@@ -768,38 +1124,7 @@ cdef class Cam:
         self.CheckNoSuccess(rv)
         return dblFPS
         
-    def GetFrameTimeRange(self):
-        '''Returns the frame rate settings
-        
-        Using GetFrameTimeRange(), you can read out the frame rate settings 
-        which are available for the current pixel clock setting. 
-        The returned values indicate the minimum and maximum frame duration 
-        in seconds. You can set the frame duration between min and max 
-        in increments defined by the intervall parameter.
-    
-        Syntax:
-        =======
-        
-        min,max,intervall= cam.GetFrameTimeRange()
-           
-        Return Values:
-        ==============
-      
-        min: 
-            Minimum available frame duration.
-
-        max:
-            Maximum available frame duration.
-
-        intervall: 
-           Increment you can use to change the frame duration.
-        
-        '''
-        
-        cdef double min,max,intervall
-        rv=is_GetFrameTimeRange (self.cid, &min, &max, &intervall)
-        self.CheckNoSuccess(rv)
-        return (min,max,intervall)
+   
     
     def SetFrameRate(self, double FPS):
         '''Set the Frame rate
@@ -856,83 +1181,7 @@ cdef class Cam:
         self.CheckNoSuccess(rv)
         return newFPS
     
-    def GetPixelClockRange(self):
-        '''Return the pixel clock range
-        
-        GetPixelClockRange() returns the adjustable pixel clock range.
-        The pixel clock limit values can vary, depending on the camera 
-        model and operating mode. 
-   
-        Syntax:
-        =======
-        
-        pnMin, pnMax=cam.GetPixelClockRange()
-        
-        Return Values:
-        ==============
-        
-        pnMin: Lower limit value.
-        
-        pnMax: Upper limit value.
-        '''
-        
-        cdef INT pnMin,pnMax
-        rv=is_GetPixelClockRange (self.cid, &pnMin, &pnMax)
-        self.CheckNoSuccess(rv)
-        return pnMin,pnMax
-    
-    def SetPixelClock(self,Clock):
-        '''Configure the pixel clock
- 
-        SetPixelClock() sets the frequency used to read out image data 
-        from the sensor (pixel clock frequency). Due to an excessive pixel 
-        clock for USB cameras, images may get lost during the transfer. 
-        If you change the pixel clock on-the-fly, the current image 
-        capturing process will be aborted.
-        
-        Some sensors allow a higher pixel clock setting if binning or 
-        subsampling has been activated. If you set a higher pixel clock 
-        and then reduce the binning/subsampling factors again, 
-        the driver will automatically select the highest possible pixel 
-        clock for the new settings.
-        
-        Changes to the image geometry or pixel clock affect the value ranges 
-        of the frame rate and exposure time. After executing SetPixelClock(), 
-        calling the following functions is recommended in order to keep 
-        the defined camera settings:
-    
-        - SetFrameRate()
-        - SetExposureTime()
-        - If you are using the uEye's flash function: SetFlashStrobe()
-       
-        Syntax:
-        =======
-        
-        rv=cam.SetPixelClock(clock)
-        
-        Input Parameters:
-        =================
-        
-        Clock: Pixel clock frequency to be set (in MHz)
 
-        Return Values:
-        ==============
-        
-        rv: 
-            SUCCESS: Function executed successfully
-        
-            Current setting when clock = GET_PIXEL_CLOCK
-    
-            INVALID_MODE: Camera is in standby mode, function not allowed.
-
-            INVALID_PARAMETER: The value for Clock is outside the pixel clock 
-            range supported by the camera.
-        
-        '''
-        
-        rv= is_SetPixelClock (self.cid, Clock)
-        self.CheckNoSuccess(rv)
-        return rv
         
     def SetAutoParameter(self,INT param, double pval1, double pval2):
         '''Set automatic parameters for the cam
@@ -1180,75 +1429,7 @@ cdef class Cam:
         self.CheckNoSuccess(rv)
         return pval1,pval2
     
-    def SetBlCompensation(self, INT nEnable, INT offset):
-        '''Set black level compensation
-
-        SetBlCompensation() enables the black level correction function 
-        which might improve the image quality under certain circumstances. 
-        By default, the sensor adjusts the black level value for each pixel 
-        automatically. If the environment is very bright, it can be necessary 
-        to adjust the black level manually.
-    
-        Syntax:
-        =======
-        rv=cam.SetBlCompensation(nEnable, offset)
-        
-        Input Parameters:
-        =================
-        
-        nEnable:
-    
-            BL_COMPENSATION_DISABLE: Disables automatic black level correction. 
-            The offset value is used as black level instead. This mode is only 
-            supported by sensors of the UI-154x/554x series.
-
-            BL_COMPENSATION_ENABLE: Enables automatic black level correction. 
-            The offset value is added to the automatic black level value.
-
-            GET_BL_COMPENSATION: Returns the current mode.
-
-            GET_BL_OFFSET: Returns the currently set value for offset.
-
-            GET_BL_DEFAULT_MODE: Returns the default mode.
-
-            GET_BL_DEFAULT_OFFSET: Returns the default value for offset.
-
-            GET_BL_SUPPORTED_MODE: Returns the supported modes.
-
-            Possible values:
-    
-                BL_COMPENSATION_ENABLE:
-                The sensor supports automatic black level correction.
-
-                BL_COMPENSATION_OFFSET:
-                For the sensor used, it is also possible to set the offset manual.
-
-        IGNORE_PARAMETER: The nEnable parameter is ignored.
-
-        offset: 
-            Contains the offset value used for compensation. Valid values 
-            are between 0 and 255.
-
-            IGNORE_PARAMETER: The offset parameter is ignored.
-
-            
-        Return Values:
-        ==============
-        
-        rv:
-            SUCCESS: Function executed successfully
-
-            Supported modes when used together with GET_BL_SUPPORTED_MODE
-    
-            Current mode when used together with GET_BL_COMPENSATION
-    
-            Current offset when used together with GET_BL_OFFSET
-        '''
-        
-        rv=is_SetBlCompensation (self.cid, nEnable, offset, 0)
-        self.CheckNoSuccess(rv)
-        return rv
-    
+   
     def SetGainBoost(self, mode):
         ''' Set the gain boost
         
@@ -1291,37 +1472,7 @@ cdef class Cam:
         self.CheckNoSuccess(rv)
         return rv
         
-    def SetGamma(self, INT nGamma):
-        ''' Set gamma correction
-        
-        SetGamma() sets the value for digital gamma correction 
-        (brighten dark image portions by applying a non-linear characteristic (LUT)). 
-        Valid values are in the range between 0.01 and 10.
-        
-        Syntax:
-        =======
-        
-        rv=cam.SetGamma(nGamma)
-        
-        Input Parameters:
-        =================
-        
-        nGamma: 
-            Gamma value to be set, multiplied by 100 (Range: 1…1000. 
-            Default = 100, corresponds to a gamma value of 1.0)
 
-            GET_GAMMA: Returns the current setting.
-        
-        Return Value:
-        =============
-            SUCCESS: Function executed successfully
-        
-            Current setting when used together with GET_GAMMA        
-        '''
-        
-        rv=is_SetGamma (self.cid, nGamma)
-        self.CheckNoSuccess(rv)
-        return rv
         
     def SetGlobalShutter(self, INT mode):
         '''Set global shutter        
@@ -1587,169 +1738,8 @@ cdef class Cam:
         
         rv=is_ResetToDefault (self.cid)
         self.CheckNoSuccess(rv)
-    
-    def SetAOI (self, INT type, INT pXPos, INT pYPos, INT pWidth, INT pHeight):
-        ''' Set the area of interest
-        
-        SetAOI() can be used to set the size and position of an area of 
-        interest (AOI) within an image. The following AOIs can be defined:
-        
-        - Image AOI – display of an image portion
-        - Auto Brightness AOI – reference area of interest for automatic 
-          brightness control
-        - Auto Whitebalance AOI – reference area of interest of automatic 
-          white balance control
-        
-        ** By default, the window size for auto AOIs is always maximum, 
-        i.e. it corresponds to the current image AOI.
-        After a change to the image geometry (by resetting an image AOI, 
-        by binning or sub-sampling), the auto AOIs will always be reset 
-        to the image AOI value (i.e. to maximum size). This means that it 
-        might be necessary to set the AOIs for the auto features again manually.
-        
-        Changes to the image geometry or pixel clock affect the value ranges 
-        of the frame rate and exposure time. After executing SetAOI(), 
-        calling the following functions is recommended in order to keep 
-        the defined camera settings:
-        
-        - SetFrameRate()
-        - SetExposureTime()
-        - If you are using the uEye's flash function: SetFlashStrobe()**
-        
-        Syntax:
-        =======
-        XPos, YPos, Width, Height= cam.SetAOI (type, pXPos, pYPos, pWidth, pHeight)
-        
-        Input Parameters:
-        =================
-        
 
-        The pXPos and pYPos parameters represent an offset with respect 
-        to the upper left image corner. The cut window is copied to the 
-        start position in the memory. If you want the image to be copied 
-        to the same offset within the memory, you can link the new position 
-        with a logical OR to the SET_IMAGEPOS_X_ABS and SET_IMAGEPOS_Y_ABS 
-        parameters.
-    
-        type:
-            - SET_IMAGE_AOI: Sets an image AOI.
-            - GET_IMAGE_AOI: Returns the current image AOI.
-            - SET_AUTO_BRIGHT_AOI: Sets average AOI values for auto gain and auto shutter.
-            - GET_AUTO_BRIGHT_AOI: Returns the current auto brightness AOI.
-            - SET_AUTO_WB_AOI: Sets an auto white balance AOI.
-            - GET_AUTO_WB_AOI: Returns the current auto white balance AOI.
-        
-        XPos: 
-            Horizontal position of the AOI
-            0...XPosMax| SET_IMAGEPOS_X_ABS: Applies the absolute position to 
-            the memory as well.
-        
-        pYPos: 
-            Vertical position of the AOI
-            0...YPosMax| SET_IMAGEPOS_Y_ABS: Applies the absolute position to 
-            the memory as well.
-        
-        pWidth: 
-            Width of the AOI
-                
-        pHeight: 
-            Height of the AOI
-        
-        Return Values:
-        ==============
-        
-        Returns the actual XPos, YPos, Width, Height, or the cofigured values when 
-        type is GET...
-        '''
-        
-        rv= is_SetAOI (self.cid, type, &pXPos, &pYPos, &pWidth, &pHeight)
-        self.CheckNoSuccess(rv)
-        
-        return pXPos, pYPos, pWidth, pHeight
-        
-    def SetImagePos (self, INT x, INT y):
-        '''Set the image position
-                
-        SetImagePos() determines the position of an area of interest (AOI) 
-        in the display window. When used together with the is_SetAOI() 
-        function, you can cut out an area of interest of the full video image.
 
-        To avoid a positional mismatch between the display area and the image area, 
-        make sure to call the functions in the correct order. Starting from the 
-        original image, it is mandatory to keep to the following order:
-        
-        - SetAOI()
-        - SetImagePos()
-        
-        ** With SetAOI(), you can set the position and size of an area of interest 
-        using a single function call.
-        
-        Changes to the image geometry or pixel clock affect the value ranges of 
-        the frame rate and exposure time. After executing SetBinning(), 
-        calling the following functions is recommended in order to keep 
-        the defined camera settings:
-
-        - SetFrameRate()
-        - SetExposureTime()
-        - If you are using the uEye's flash function: SetFlashStrobe()**
-        
-        Syntax:
-        =======
-        
-        rv= cam.SetImagePos(x,y)
-        
-        Input Parameters:
-        =================
-        
-        The x and y parameters represent an offset with respect to the upper left 
-        image corner. The cut window is copied to the start position in the memory.
-        If you want the image to be copied to the same offset within the memory, 
-        you can link the new position with a logical OR to the SET_IMAGE_POS_X_ABS 
-        and SET_IMAGE_POS_Y_ABS parameters.
-        
-        x:
-            - 0...xMax: Sets the horizontal position
-            - 0...xMax | IS_SET_IMAGE_POS_X_ABS: Applies the absolute position 
-              to the memory as well.
-            - GET_IMAGE_POS_X: Returns the current x position.
-            - GET_IMAGE_POS_X_MIN: Returns the minimum value for the horizontal 
-              AOI position.
-            - GET_IMAGE_POS_X_MAX: Returns the maximum value for the horizontal 
-              AOI position.
-            - GET_IMAGE_POS_X_INC: Returns the increment for the horizontal AOI 
-              position.
-            - GET_IMAGE_POS_X_ABS: Returns the absolute horizontal position in 
-              the memory.
-            - GET_IMAGE_POS_Y: Returns the current Y position.
-            - GET_IMAGE_POS_Y_MIN: Returns the minimum value for the vertical 
-              AOI position.
-            - GET_IMAGE_POS_Y_MAX: Returns the maximum value for the vertical 
-              AOI position.
-            - GET_IMAGE_POS_Y_INC: Returns the increment for the vertical AOI 
-              position.
-            - GET_IMAGE_POS_Y_ABS: Returns the absolute vertical position in the 
-              memory.
-        
-        y:
-            - 0...yMax: Sets the vertical position
-            - 0...yMax| IS_SET_IMAGE_POS_Y_ABS: Applies the absolute position to 
-              the memory as well.
-            - 0: When returning settings via parameter x (s. above)
-        
-        Return Values:
-        ==============
-        
-        rv:
-            - SUCCESS: Function executed successfully
-            - INVALID_PARAMETER: Parameters x or y are invalid  (x, y < 0)
-            - Current setting when used together with GET_IMAGE_POS parameters
-            - INVALID_MODE: Camera is in standby mode, function not allowed.
-        
-        '''
-        
-        rv= is_SetImagePos (self.cid, x, y)
-        
-        self.CheckNoSuccess(rv)
     
     def SetBinning (self, INT mode):
         ''' Set or get the binning mode   
@@ -1997,7 +1987,7 @@ cdef class Cam:
     
         rv=is_SetTimeout (self.cid, nMode, Timeout)
         self.CheckNoSuccess(rv)
-        if  rv!= IS_SUCCESS:
+        if  rv!= c_IS_SUCCESS:
             raise Exception("Could not set timeout")
         return rv
             
@@ -2016,7 +2006,7 @@ cdef class Cam:
             - TRUE if live capture is enabled
 
         '''
-        return self.CaptureVideo(IS_GET_LIVE)
+        return self.CaptureVideo(c_IS_GET_LIVE)
 
     def CaptureVideo (self, INT Wait):
         '''Capture Video
@@ -2060,7 +2050,7 @@ cdef class Cam:
         '''
         
         rv=is_CaptureVideo (self.cid, Wait)
-        if (Wait != IS_GET_LIVE):
+        if (Wait != c_IS_GET_LIVE):
             self.CheckNoSuccess(rv)
             self.LiveMode = True
         return rv
@@ -2244,177 +2234,8 @@ cdef class Cam:
     #~def
     #INT is_GetCaptureErrorInfo (self.cid, UEYE_CAPTURE_ERROR_INFO* CaptureErrorInfo,UINT SizeCaptureErrorInfo)
     
-    def LoadBadPixelCorrectionTable (self, char* File):
-        '''Load bad pixel correction table
         
-        LoadBadPixelCorrectionTable() loads a list of sensor hot pixel coordinates 
-        that was previously saved using the SaveBadPixelCorrectionTable() function.
-        
-        
-        Syntax:
-        =======
-        rv=cam.LoadBadPixelCorrectionTable (File)
-        
-        Input Values:
-        =============
-        
-        File: 
-            string which contains the name of the file where the coordinates are
-            stored. You can either pass an absolute or a relative path.
-        
-        Return Values:
-        ==============
-        
-        rv:
-            - SUCCESS: Function executed successfully
 
-        '''
-        
-        rv= is_LoadBadPixelCorrectionTable (self.cid, File)
-        self.CheckNoSuccess(rv)
-        return rv 
-        
-    def SaveBadPixelCorrectionTable (self, char* File):
-        '''Save bad pixel correction table
-        
-        SaveBadPixelCorrectionTable() saves the user-defined hot pixel list 
-        to the specified file.
-        
-        
-        Syntax:
-        =======
-        
-        rv=cam.SaveBadPixelCorrectionTable( File) 
-        
-        Input Values:
-        =============
-        
-        File: 
-            String which contains the name of the file where the coordinates are 
-            stored. You can either pass an absolute or a relative path.
-
-        Return Values:
-        ==============
-        
-        rv:
-            SUCCESS: Function executed successfully
-        '''
-    
-        rv= is_SaveBadPixelCorrectionTable (self.cid, File)
-        self.CheckNoSuccess(rv)
-        return rv
-        
-    def SetBadPixelCorrection (self, INT nEnable, INT threshold):
-        '''Set bad pixel correction table
-        
-        SetBadPixelCorrection() enables/disables the software correction 
-        of sensor hot pixels.
-        
-        Syntax:
-        =======
-        
-        rv=SetBadPixelCorrection (nEnable, threshold)
-        
-        Input Values:
-        =============
-        
-        nEnable:
-            - BPC_DISABLE: Disables the correction function.
-            - BPC_ENABLE_SOFTWARE: Enables software correction based on the hot 
-              pixel list stored in the EEPROM.
-            - BPC_ENABLE_USER: Enables software correction based on user-defined 
-              values. First, the SetBadPixelCorrectionTable() function must be called.
-            - GET_BPC_MODE: Returns the current mode.
-            - GET_BPC_THRESHOLD: Returns the current threshold value.
-        
-        threshold: Currently not used
-        
-        Return Values:
-        ==============
-        
-        rv:
-            - SUCCESS: Function executed successfully
-            - Current mode when used in connection with GET_BPC_MODE
-            - Current threshold value when used in connection with GET_BPC_THRESHOLD
-        
-        '''   
-        
-        rv=is_SetBadPixelCorrection (self.cid, nEnable, threshold)
-        self.CheckNoSuccess(rv)
-        return rv
-    
-    #~ def SetBadPixelCorrectionTable (self, INT nMode, list pixList):
-        #~ '''Set or get the bad pixel correction table.
-          #~ 
-        #~ This method can be used to set the table containing the hot pixel 
-        #~ positions which will be used by the user-defined hot pixel correction 
-        #~ function. You can enable hot pixel correction by calling 
-        #~ self.SetBadPixelCorrection(). Each value in List consists of an 
-        #~ integer number. The coordinates are listed first X, then Y.
-        #~ 
-        #~ A table with 3 hot pixels must contain 6 values and will be 
-        #~ structured as follows:
-#~ 
-        #~ X1 - Y1 - X2 - Y2 - X3 - Y3 
-#~ 
-        #~ Syntax:
-        #~ =======
-        #~ 
-        #~ rl=cam.SetBadPixelCorrectionTable (nMode, pixList):
-        #~ 
-        #~ Input Parameters:
-        #~ =================
-        #~ nMode:
-            #~ - SET_BADPIXEL_LIST: Sets a new user-defined list. The List parameter 
-              #~ contains the data using the format described above.
-            #~ - GET_BADPIXEL_LIST: Returns a python list containig the previously 
-              #~ user-defined hot pixel list. In this case List is not used.
-            #~ 
-        #~ pixList: 
-            #~ List containing the the hot pixel table, using the format described 
-            #~ above
-#~ 
-        #~ Return Values:
-        #~ ==============
-        #~ 
-        #~ rl:
-            #~ A a python list containig the user-defined hot pixel list.
-        #~ 
-        #~ '''
-        #~ 
-        #~ cdef WORD * pList
-        #~ 
-        #~ if nMode==IS_SET_BADPIXEL_LIST:
-            #~ n=len(pixList)
-            #~ assert n%2==0, "Table lenght must be even"
-            #~ pList= <WORD *>malloc((n+1)*sizeof(WORD))
-            #~ pList[0]=n/2
-        #~ 
-            #~ for i,d in enumerate(pixList):
-                #~ pList[i+1]=d
-        #~ 
-            #~ rv=is_SetBadPixelCorrectionTable (self.cid, nMode, pList)
-        #~ 
-            #~ self.CheckNoSuccess(rv)
-            #~ free(pList)
-            #~ rl= pixList
-        #~ elif nMode==IS_GET_BADPIXEL_LIST:
-            #~ rl=[]
-            #~ n=is_SetBadPixelCorrectionTable (self.cid, IS_GET_LIST_SIZE, pList)
-            #~ 
-            #~ pList= <WORD *>malloc((2*n+1)*sizeof(WORD))
-            #~ rv=is_SetBadPixelCorrectionTable (self.cid, nMode, pList)
-            #~ self.CheckNoSuccess(rv)
-            #~ 
-            #~ for i in range(2*n):
-                #~ rl.append(pList[i+1])
-                #~ free(pList)
-            #~ 
-        #~ else:
-            #~ raise Exception("Invalid nMode Parameter")
-        #~ 
-        #~ return rl
-    
     def SetColorConverter (self, INT ColorMode, INT ConvertMode):
         '''Set color converter
 
@@ -2463,67 +2284,6 @@ cdef class Cam:
         '''
         
         rv=is_SetColorConverter (self.cid, ColorMode, ConvertMode) 
-        self.CheckNoSuccess(rv)
-        return rv
-    
-    def SetColorCorrection (self, INT nEnable):
-        '''Set color correction
-        
-        For colour cameras, SetColorCorrection() enables colour correction 
-        in the uEye driver. This enhances the rendering of colours for cameras 
-        with colour sensors. Colour correction is a digital correction based 
-        on a colour matrix which is adjusted individually for each sensor.
-        If you perform Bayer conversion for GigE uEye HE colour cameras in 
-        the camera itself, colour conversion will automatically also take 
-        place in the camera. 
-        
-        ** After changing this parameter, perform manual or automatic white 
-        balancing in order to obtain correct colour rendering 
-        (see also SetAutoParameter()).**
-        
-        Syntax:
-        =======
-        
-        rv=SetColorCorrection (nEnable)
-        
-
-        Input Parameters:
-        =================
-        
-        nEnable:
-            - CCOR_ENABLE_NORMAL: Enables simple colour correction. This parameter 
-              replaces CCOR_ENABLE.
-            - CCOR_ENABLE_BG40_ENHANCED: Enables colour correction for cameras with 
-              optical IR filter glasses of the BG40 type.
-            - CCOR_ENABLE_HQ_ENHANCED: Enables colour correction for cameras with 
-              optical IR filter glasses of the HQ type.
-            - CCOR_DISABLE: Disables colour correction.
-            - GET_CCOR_MODE: Returns the current setting.
-            - GET_SUPPORTED_CCOR_MODE: Returns all supported colour correction modes. 
-            - GET_DEFAULT_CCOR_MODE: Returns the default colour correction mode.
-            
-        Return Values:
-        ==============
-        rv:
-            - SUCCESS: Function executed successfully
-            - Current setting when used together with GET_CCOR_MODE
-            - When used together with GET_SUPPORTED_CCOR_MODE:
-                When used for colour cameras and together with GET_SUPPORTED_CCOR_MODE, 
-                this parameter returns the supported values linked by a logical OR:
-                - CCOR_ENABLE_NORMAL
-                - CCOR_ENABLE_BG40_ENHANCED
-                - CCOR_ENABLE_HQ_ENHANCED
-        
-                When used for monochrome cameras, the system returns 0.
-            - When used together with GET_DEFAULT_CCOR_MODE:
-                When used for colour cameras and together with GET_DEFAULT_CCOR_MODE, 
-                this parameter returns the default colour correction mode: 
-                CCOR_ENABLE_NORMAL , CCOR_ENABLE_HQ_ENHANCED.
-                When used for monochrome cameras, the system returns 0.
-        '''
-        
-        cdef double* factors
-        rv= is_SetColorCorrection (self.cid, nEnable, factors)
         self.CheckNoSuccess(rv)
         return rv
     
@@ -2584,29 +2344,27 @@ cdef class Cam:
         '''
         
         rv=is_SetColorMode (self.cid,  Mode)
-        if (Mode==IS_GET_COLOR_MODE):
+        if (Mode==c_IS_GET_COLOR_MODE):
             return rv
         self.CheckNoSuccess(rv)
 
         # Save information relevant to the colormode
-        self.colormode= is_SetColorMode(self.cid, IS_GET_COLOR_MODE)        
+        self.colormode= is_SetColorMode(self.cid, c_IS_GET_COLOR_MODE)        
         self.bitspixel=bitspixel(self.colormode)
         
         if self.Imgs[0]!=NULL:
             for i in range(self.BufCount):
-                #rv=is_FreeImageMem (self.cid, self.Img, self.ImgMemId)
                 rv=is_FreeImageMem (self.cid, self.Imgs[i], self.BufIds[i])
                 self.CheckNoSuccess(rv)
-                self.Imgs[i] = NULL
                 self.BufIds[i] = 0
         
-        #rv=is_AllocImageMem(self.cid, self.nMaxWidth, self.nMaxHeight, self.bitspixel, &self.Img, &self.ImgMemId)
+        
         for i in range(self.BufCount):
             rv=is_AllocImageMem(self.cid, self.nMaxWidth, self.nMaxHeight, \
                                 self.bitspixel, &self.Imgs[i], &self.BufIds[i])
             self.CheckNoSuccess(rv)
         
-            #rv=is_SetImageMem (self.cid, self.Img, self.ImgMemId)
+#~             rv=is_SetImageMem   (self.cid, self.Imgs[i], self.BufIds[i])
             rv=is_AddToSequence (self.cid, self.Imgs[i], self.BufIds[i])
             self.CheckNoSuccess(rv)
         
@@ -2620,98 +2378,6 @@ cdef class Cam:
         
         return Mode
     
-    def SetConvertParam (self, BOOL ColorCorrection, INT BayerConversionMode, INT ColorMode, INT Gamma, tuple WhiteBalanceMultipliers):
-        '''Set convertion parameters
-        
-        Using SetConvertParam(), you can set the parameters for converting 
-        a raw Bayer image to a colour image. To convert the image, use 
-        the ConvertImage() function. 
-        
-        Syntax:
-        =======
-        
-        rv=SetConvertParam (ColorCorrection, BayerConversionMode, 
-                  ColorMode, Gamma, WhiteBalanceMultipliers)
-        
-        
-        Input Parameters:
-        =================
-        
-        ColorCorrection: 
-            Enables / disables colour correction.
-
-        BayerConversionMode: 
-            Sets the Bayer conversion mode.
-            - SET_BAYER_CV_BETTER: Better quality
-            - SET_BAYER_CV_BEST: Optimum quality (higher CPU load)
-
-        ColorMode: 
-            Sets the colour mode for the output image.
-
-        Gamma: 
-            Gamma value multiplied by 100. Range: [1…1000]
-
-        WhiteBalanceMultipliers: 
-            Tuple containing the red, green and blue gain values
-        
-        Return Values:
-        ==============
-        
-        rv:
-            - SUCCESS: Function executed successfully
-            - INVALID_COLOR_FORMAT: Invalid ColorMode parameter
-            - INVALID_PARAMETER: Other invalid parameter.
-        
-        '''
-        cdef double WBM[3]
-        assert len(WhiteBalanceMultipliers)==3,"the tuple WhiteBalanceMultipliers must contain 3 double numbers"
-        WBM[0]=WhiteBalanceMultipliers[0]
-        WBM[1]=WhiteBalanceMultipliers[1]
-        WBM[2]=WhiteBalanceMultipliers[2]
-        rv=is_SetConvertParam (self.cid, ColorCorrection, BayerConversionMode, ColorMode, Gamma, WBM)
-        self.CheckNoSuccess(rv)
-        return rv
-            
-    def SetEdgeEnhancement (self, INT nEnable):
-        '''Set edge enhancement 
-        
-        SetEdgeEnhancement() enables a software edge filter. Due to Bayer 
-        format colour conversion, the original edges of a colour image 
-        may easily become blurred. By enabling the digital edge filter, 
-        you can optimise edge representation. This function causes a higher 
-        CPU load.
-
-        If you perform Bayer conversion for GigE uEye HE colour cameras 
-        in the camera itself, edge enhancement will automatically also take 
-        place in the camera. In this case, the CPU load will not increase.
-        
-        Syntax:
-        =======
-        
-        RV=SetEdgeEnhancement (nEnable)
-        
-        Input Parameters:
-        =================
-        
-        nEnable:
-            - EDGE_EN_DISABLE: Disables the edge filter.
-            - EDGE_EN_STRONG: Enables strong edge enhancement.
-            - EDGE_EN_WEAK: Enables weaker edge enhancement.
-            - GET_EDGE_ENHANCEMENT: Returns the current setting.
-        
-        Return Values:
-        ==============
-        
-        rv:
-            - SUCCESS: Function executed successfully
-            - Current setting when used together with GET_EDGE_ENHANCEMENT
-        
-        '''
-    
-        rv=is_SetEdgeEnhancement (self.cid, nEnable)
-        self.CheckNoSuccess(rv)
-        return rv 
-
     def SetSaturation (self, INT ChromU, INT ChromV):
         '''Set saturation
         
@@ -2923,7 +2589,7 @@ cdef class Cam:
         '''
         return is_GetCameraType(self.cid)
     
-    def CheckNoSuccess(self,INT rv, description=None):
+    cpdef CheckNoSuccess(self,INT rv, description=None):
         '''Method that checks the return value of a is_XXXX function.
         
         If rv != SUCCESS, the error mesage is printed and a exception is raised
@@ -2931,7 +2597,7 @@ cdef class Cam:
         
         cdef char * ermsg
         #if rv==IS_NO_SUCCESS:
-        if rv != IS_SUCCESS:
+        if rv != c_IS_SUCCESS:
             if description:
                 err = "Error in '%s' -- " % description
             else:
@@ -2939,62 +2605,12 @@ cdef class Cam:
 
             err += "API call returned %d, " % rv
             rv1 = is_GetError (self.cid, &rv, &ermsg)
-            if rv1 != IS_SUCCESS:
+            if rv1 == 1:
+                raise Exception(err + "Camera handle is not valid.")
+            if rv1 != c_IS_SUCCESS:
                 raise Exception(err + "but no error message available.")
             raise Exception(err + "'" + ermsg + "'")
             
-            
-       
-    
-    def GetGlobalFlashDelays(self):
-        '''Get global flash delay
-        
-        Rolling shutter cameras:
-
-        Using GetGlobalFlashDelays(), you can determine the times required 
-        to implement a global flash function for rolling shutter cameras. 
-        This way, a rolling shutter camera can also be used as a global shutter 
-        camera provided that no ambient light falls on the sensor outside 
-        the flash period.
-        If the exposure time is set too short so that no global flash operation 
-        is possible, the function returns NO_SUCCESS.
-        
-        ** To use a rolling shutter camera with the Global Start function, 
-        call the SetGlobalShutter() function before GetGlobalFlashDelays(). 
-        Otherwise, incorrect values will be returned for Delay and Duration. **
-
-        Global shutter cameras:
-
-        In freerun mode, the exposure of global shutter cameras is delayed 
-        if the exposure time is not set to the maximum value. GetGlobalFlashDelays() 
-        determines the required delay in order to synchronise exposure and flash operation. 
-        In triggered mode, the return values for delay and flash duration are 0, 
-        since no delay is necessary before exposure starts.
-
-        
-        Syntax:
-        =======
-        
-        delay,duration=cam.GetGlobalFlashDelays ()
-        
-        Return Values:
-        ==============
-        
-        delay:
-            flash delay in µs.
-            
-        duration: 
-            flash duration in µs.
-        
-    
-        '''
-        
-        cdef ULONG pulDelay
-        cdef ULONG pulDuration
-        rv=is_GetGlobalFlashDelays(self.cid,&pulDelay, &pulDuration)
-        self.CheckNoSuccess(rv)
-        return pulDelay,pulDuration
-    
     def GetImageHistogram(self):
         """
         Syntax:
@@ -3032,91 +2648,132 @@ cdef class Cam:
         pass
         
     
-### Missing 
-#AddToSequence
-#AllocImageMem
-#ClearSequence
-#ConvertImage
-#CopyImageMem
-#CopyImageMemLines
-#DirectRenderer---- windows
-#DisableEvent
-#EnableAutoExit
-#EnableEvent
-#EnableHdr
-#EnableMessage ---- windows
-#ExitCamera -> this is in the class destructor
-#ExitEvent
-#FreeImageMem-> this is in the class destructor
-#GetActiveImageMem
-#GetActSeqBuf
-#GetAutoInfo
-#GetCameraInfo -> This is called in the class constructor
-#GetCameraList -> This is in the module, out of the class, but it is not working
-#GetCameraLUT   ---- Giga
-#GetCaptureErrorInfo
-#GetColorConverter
-#GetColorDepth ---windows
-#GetComportNumber ---- Giga
-#GetDuration --- GigE
-#GetEthDeviceInfo --Giga
-#GetError ------> CheckNoSuccess(self,INT rv):
+###### Special methods
+###### Methods that do not really belong in to the ueye API, but that are
+###### Usefull.
 
+    
+    @cython.cdivision(True)
+    @cython.boundscheck(False)
+    @cython.wraparound(False)
+    def GrabImageA(self, unsigned char n, unsigned char cm=False,unsigned char threshold=0):
+        """Grab an average of N images
+         
+            This is a modified copy of the GrabImage, that allows to get 
+            an average of N frames.
+            
+            Input Parameters:
+            
+            n: 
+                Number of images used in the averaging
+            
+            cm: (False/True) 
+                If False, only the image is returned, if True, the image, plus
+                the center of mass of the image are returned. Only the information
+                contained in the AOI is used th calculate the center of mass.
+            
+            threshold:
+                The pixels whos value is below the threshold are ignored in
+                the average and in the center of mass calculations.
+        """
 
-#GetHdrKneepointInfo
-#GetHdrKneepoints
-#GetHdrMode
+        cdef int i,x,y,ya
+        cdef double *avim, cmx=0,cmy=0,cmt=0
+        cdef int w,h
+        cdef double data
+        w=self.AOIx1-self.AOIx0
+        h=self.AOIy1-self.AOIy0
+        #cdef npy.ndarray[npy.float_t, ndim = 2] av = npy.zeros((h,w), dtype = 'float',order='C')
+        cdef npy.ndarray[npy.float_t, ndim = 2] av = zero_mat(h,w)
+        
+        cdef char * img
+        
+        if n==0: n=1;
+        ##This seems to work fine, but when I try to exit video mode it frezes
+        
+#~          # If we are supposed to be in Live Mode, make sure we still are:
+#~         if not self.IsLive():
+#~             print >> stderr, "Camera dropped out of Live mode. Re-starting..."
+#~             self.CaptureVideo(c_IS_WAIT)
+        
+        if self.colormode==c_IS_CM_MONO8:
+            ##Grab first image
+            rv= is_FreezeVideo (self.cid, c_IS_WAIT)
+            self.CheckNoSuccess(rv)
+            img=self.GetNextBuffer()
+            
+            ##The last grab is lost
+            for i in range(n):
+                ## Do the average while the next image is grabbed
+                rv= is_FreezeVideo (self.cid, c_IS_WAIT)
+                self.CheckNoSuccess(rv)
+                for y in range(self.AOIy0,self.AOIy1):
+                    ya=y*self.LineInc
+                    for x in range(self.AOIx0,self.AOIx1):
+                        data=(<unsigned char>img[x+ya])
+                        if data<threshold: continue
+                        av[y-self.AOIy0,x-self.AOIx0]+=data/n 
+                        if cm:
+                            cmt=cmt+data
+                            cmx=cmx+data*x
+                            cmy=cmy+data*y
+                        
+                img=self.GetNextBuffer()
+            
+        else: raise TypeError("Average not defined for this color mode")
+        if cm:
+            return av,(cmx/cmt, cmy/cmt)
+        else:
+            return av
+            
+    def AdjustExposure(self, limits=(200,240)):
+        """Method to adjust the exposure time so that no point of the image
+        is saturated. Only FrameRate is adjusted.
+        
+        It searches the exposure time so the maximum value is between the limits"""
+        
+        
+        cdef double minexp,maxexp,step,expo
+        cdef int maxdata,minlim,maxlim
+        
+        if self.colormode==c_IS_CM_MONO8:
+            
+            minlim,maxlim=limits
+            minexp,maxexp,step=self.ExposureTimeRange
+            
+            li=minexp
+            ls=maxexp
+            lp=(li+ls)/2
+            
+            self.ExposureTime=li
+            self.GrabImage(AOI=True)
+            i=self.GrabImage(AOI=True).max()
+            
+            self.ExposureTime=ls
+            self.GrabImage(AOI=True)
+            s=self.GrabImage(AOI=True).max()
+            
+            self.ExposureTime=lp
+            self.GrabImage(AOI=True)
+            p=self.GrabImage(AOI=True).max()
+            
+            ## EXIT IF NOT POSSIBLE
+            if i>maxlim: return False
+            if s<minlim: return False 
 
-#GetImageInfo
-#GetImageMem
-#GetImageMemPitch
-#GetNumberOfCameras-> This is out of the class, in the module
-#GetOsVersion 
-#GetSensorInfo -> This is in the init of the class
-#GetSensorScalerInfo
-#GetSupportedTestImages
-#GetTestImageValueRange
-#GetTimeout
-#GetUsedBandwidth
-#GetVsyncCount
-#HasVideoStarted
-#InitCamera -> This one is in the constructor of the class
-#InitEvent
-#InquireImageMem
-#IsVideoFinish
-#LoadImage
-#LoadImageMem
-#LoadParameters
-#LockSeqBuf -> Called by GrabImage
-#ReadI2C
-#RenderBitmap ---- windows
-#ResetCaptureErrorInfo
-#SaveImage
-#SaveImageEx
-#SaveImageMem
-#SaveImageMemEx
-#SaveParameters
-#SetAllocatedImageMem   
-#SetAutoCfgIpSetup
-#SetCameraID
-#SetCameraLUT
-#SetDisplayMode --- windows
-#SetDisplayPos  ----windows
-#SetFlashDelay
-#SetFlashStrobe
-#SetHdrKneepoints   
-#SetImageMem
-#SetImagePos
-#SetIO
-#SetIOMask
-#SetLED
-#SetOptimalCameraTiming
-#SetPacketFilter
-#SetPersistentIpCfg 
-#SetSensorScaler ???????
-#SetSensorTestImage
-#SetStarterFirmware
-#SetTriggerCounter
-#SetTriggerDelay
-#UnlockSeqBuf -> used in GrabImage and UnlockLastBuf
-#WriteI2C
+            while True:
+                if minlim<= p<= maxlim:return True
+                if p< minlim:
+                    li=lp
+                if p> maxlim:
+                    ls=lp
+                lp=(li+ls)/2
+                
+                self.ExposureTime=lp
+                self.GrabImage(AOI=True)
+                p=self.GrabImage(AOI=True).max()
+                if (ls-li)< 2*step: return True
+                
+        else:
+            raise TypeError("This is defined only for monochrome cams")
+            

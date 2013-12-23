@@ -4,6 +4,7 @@
 import sys, os, stat, commands
 from distutils.core import setup
 from distutils.extension import Extension
+from Cython.Build import cythonize
 
 try:
     from Cython.Distutils import build_ext
@@ -37,7 +38,7 @@ def makeExtension(extName):
         extName,
         flist,
         include_dirs = ["."],   # adding the '.' to include_dirs is CRUCIAL!!
-        extra_compile_args = ["-D__LINUX__"],#["-O3", "-Wall","-D__LINUX__"],
+        extra_compile_args = ["-D__LINUX__"],#["-O3", "-Wall","-D__LINUX__","-march=native"],#
         #extra_link_args = ['-g'],
         libraries = ["ueye_api",],
         )
@@ -49,14 +50,14 @@ extensions = [makeExtension(name) for name in extNames]
 
 
 setup(
-        version ='0.1',
+        version ='??',
         name =  "pyueye",
         author= 'Ricardo Amezquita Orozco',
         author_email='ramezquitao@cihologramas.com',
         description='Python binding for ueye camera drivers',
         license='BSD',
         url='https://trac.cihologramas.com/trac/',
-        ext_modules=extensions,
+        ext_modules=cythonize(extensions),
         packages=["ueye","wxueye"],
         scripts=['wxVidCap.py'],
         cmdclass = {'build_ext': build_ext},
