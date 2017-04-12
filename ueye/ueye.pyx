@@ -1,7 +1,7 @@
 #!python
 #cython: embedsignature=True
 
-# Copyright (c) 2010, Combustion Ingenieros Ltda.
+# Copyright (c) 2010-2017, Combustion Ingenieros Ltda.
 # All rights reserved.
 #       Redistribution and use in source and binary forms, with or without
 #       modification, are permitted provided that the following conditions are
@@ -33,8 +33,8 @@
 
 
 # Functions definition
-from stdlib cimport *
-from python_cobject cimport *
+from libc.stdlib cimport *
+from cpython cimport *
 import numpy as npy
 cimport numpy as npy
 from ueyeh cimport *
@@ -360,23 +360,7 @@ cdef class Cam:
     cam:
         Instance to the Cam class assigned to the requested cam.
     '''
-    cdef char **Imgs
-    cdef int BufCount
-    cdef int *BufIds
-    cdef char *LastSeqBuf
-    cdef char *LastSeqBuf1
-    cdef char LastSeqBufLocked
-    cdef public HIDS cid
-    cdef public INT nMaxWidth,nMaxHeight,nColorMode, colormode
-    cdef public object SerNo,ID,Version,Date,Select,SensorID,strSensorName, \
-            bMasterGain, bRGain, bGGain, bBGain, \
-            bGlobShutter, bitspixel
-    cdef public INT LineInc, 
-    cdef public int ImgMemId
-    cdef public int LiveMode
-    cdef INT AOIx0,AOIy0,AOIx1,AOIy1 ##Buffers to save the AOI to speed up the image grabbing
-    
-        
+
     def __init__(self, HIDS cid=0, int bufCount=3,livemode=True):
     
     
@@ -711,11 +695,13 @@ cdef class Cam:
             if g<0: g=1
             if g>1000: g=1000
             
-            rv=is_SetGamma (self.cid, g)
+            rv=is_Gamma (self.cid, c_IS_GAMMA_CMD_SET, &g, sizeof(g))
             self.CheckNoSuccess(rv)
         
         def __get__(self):
-            return is_SetGamma (self.cid, c_IS_GET_GAMMA)/100.
+            cdef int g
+            is_Gamma(self.cid, c_IS_GAMMA_CMD_GET, & g, sizeof(g))
+            return g/100.
 
     property Gain:
         '''
@@ -899,7 +885,51 @@ cdef class Cam:
         self.LastSeqBuf1=img
         return img
 
-    def GrabImage(self, BGR=False, UINT Timeout=500, LeaveLocked=False, char AOI=False):
+    cdef unsigned char [:,:] GrabImageGS(self, UINT Timeout=500, bint LeaveLocked=False, bint AOI = False):
+        "Method to capture an image in grayscale to be used only in cython"
+
+        cdef unsigned char [:,:] data
+        # If we are supposed to be in Live Mode, make sure we still are:
+        if (self.LiveMode and not self.IsLive()):
+            print >> stderr, "Camera dropped out of Live mode. Re-starting..."
+            self.CaptureVideo(c_IS_WAIT)
+
+        # If we aren't in Live mode, kick off a single capture:
+        if (not self.LiveMode):
+            rv= is_FreezeVideo (self.cid, Timeout)
+            self.CheckNoSuccess(rv)
+
+        cdef char * img
+
+
+        img=self.GetNextBuffer()
+
+        # Unlock previous buffer here, so there's no chance of overwrite.
+        if self.LastSeqBufLocked:
+            rv= is_UnlockSeqBuf(self.cid, c_IS_IGNORE_PARAMETER, self.LastSeqBuf)
+            if rv != c_IS_SUCCESS:
+                print >> stderr, "Buffer %d didn't unlock." % (<int>self.LastSeqBuf)
+            self.LastSeqBufLocked=False
+
+
+        #Convertir a memview
+        data = <unsigned char [:self.nMaxHeight, :self.LineInc] > <unsigned char *>img
+
+        # Lock the buffer if requested:
+        if LeaveLocked:
+            rv= is_LockSeqBuf(self.cid, c_IS_IGNORE_PARAMETER, img)
+            self.CheckNoSuccess(rv)
+            self.LastSeqBufLocked=True
+
+        self.LastSeqBuf = img
+
+        if AOI:
+            return data[self.AOIy0:self.AOIy1,self.AOIx0:self.AOIx1]
+        else:
+            return data
+
+
+    cpdef GrabImage(self, BGR=False, UINT Timeout=500, LeaveLocked=False, char AOI=False):
         '''Grabs and reads an image from the camera and returns a numpy array
 
         By default, returns color images in RGB order for backwards compatibility.
@@ -2519,7 +2549,8 @@ cdef class Cam:
         """
 
         cdef int i,x,y,ya
-        cdef double *avim, cmx=0,cmy=0,cmt=0
+        cdef double *avim
+        cdef double cmx=0,cmy=0,cmt=0
         cdef int w,h
         cdef double data
         w=self.AOIx1-self.AOIx0

@@ -1,0 +1,9 @@
+/.project
+*.pyc
+.SyncIgnore
+/deb_dis*
+*.c
+*.gz
+/.idea
+/MANIFEST
+
