@@ -50,13 +50,14 @@ extensions = [makeExtension(name) for name in extNames]
 
 
 setup(
-        version ='??',
+        #Version del ueye para la que esto funciona
+        version ='4.30',
         name =  "pyueye",
-        author= 'Ricardo Amezquita Orozco',
+        author= 'Ricardo Amezquita Orozco - Ivan Pulido',
         author_email='ramezquitao@cihologramas.com',
         description='Python binding for ueye camera drivers',
         license='BSD',
-        url='https://trac.cihologramas.com/trac/',
+        url='',
         ext_modules=cythonize(extensions),
         packages=["ueye","wxueye"],
         scripts=['wxVidCap.py'],

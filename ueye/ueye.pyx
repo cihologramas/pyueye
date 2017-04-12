@@ -104,7 +104,7 @@ cdef dict AOIinfo={\
             #IS_SENSOR_UI1005_M           
             #IS_SENSOR_UI1005_C          
 
-            #IS_SENSOR_UI1240_M          
+            c_IS_SENSOR_UI1240_M:  (16,1280,4,4,1024,2,2,2),         
             #IS_SENSOR_UI1240_C          
             #IS_SENSOR_UI1240_NIR        
 
@@ -377,7 +377,7 @@ cdef class Cam:
     cdef INT AOIx0,AOIy0,AOIx1,AOIy1 ##Buffers to save the AOI to speed up the image grabbing
     
         
-    def __init__(self, HIDS cid=0, int bufCount=3):
+    def __init__(self, HIDS cid=0, int bufCount=3,livemode=True):
     
     
         rv=is_InitCamera(&cid, NULL)
@@ -388,10 +388,8 @@ cdef class Cam:
         
         self.cid=cid
         
-        ##If True, the camera is in livemode, this is any change in the image 
-        ##is visible in the image buffer in realtime (no need to grab)
-         
-        self.LiveMode = False
+       
+        
         
         cdef CAMINFO cInfo
         rv =is_GetCameraInfo(self.cid, &cInfo)
@@ -405,8 +403,8 @@ cdef class Cam:
         #pInfo.Type,pInfo.Reserved
         
         cdef SENSORINFO sInfo
+
         rv=is_GetSensorInfo(self.cid, &sInfo)
-        
         self.CheckNoSuccess(rv,"Error in Cam.__init__. Could not get sensor info")
         
         self.SensorID=sInfo.SensorID            # e.g. IS_SENSOR_UI224X_C
@@ -439,25 +437,27 @@ cdef class Cam:
         self.Imgs = <char **>calloc(bufCount, sizeof(char*))
         self.SetColorMode (colormode)    
     
-        rv=is_SetExternalTrigger (self.cid, c_IS_SET_TRIGGER_OFF)
+        
+        ### Config the cam for freerun or shot-by-shot basis
+        ##If True, the camera is in livemode, this is any change in the image 
+        ##is visible in the image buffer in realtime (no need to grab)
+         
+        
+        if livemode:
+            rv=is_SetExternalTrigger (self.cid, c_IS_SET_TRIGGER_OFF)
+            self.CaptureVideo(c_IS_WAIT)
+        else:
+            rv=is_SetExternalTrigger (self.cid, c_IS_SET_TRIGGER_SOFTWARE)
+            self.LiveMode = False
+        
+      
+        
         self.CheckNoSuccess(rv, "Error in Cam.__init__. Could not set trigger")
         
         rv=is_FreezeVideo (self.cid, c_IS_WAIT)
         self.CheckNoSuccess(rv, "Error in Cam.__init__. Could not Freeze video")
         
         
-        # Enable FRAME events to make video capturing easier:
-        self.CheckNoSuccess(is_EnableEvent(self.cid, c_IS_SET_EVENT_FRAME),\
-                            "Error in Cam.__init__. Could not enable frame event")
-        
-        #according to the ueye manual V 4.31 The init event is not used in linux
-        #just in Windows
-        
-        #self.CheckNoSuccess(is_InitEvent(self.cid, NULL, c_IS_SET_EVENT_FRAME),\
-        #                    "Error in Cam.__init__. Could not init frame event")
-        
-        
-        #Start with auto BL_Compensation off by default if possible
         try:
             self.AutoBlackLevel=False
             self.BlackLevelOffset=0
@@ -479,10 +479,9 @@ cdef class Cam:
         for i in range(self.BufCount):
             rv=is_FreeImageMem (self.cid, self.Imgs[i], self.BufIds[i])
             self.CheckNoSuccess(rv)
-
-        if self.cid:
-            rv=is_ExitCamera (self.cid)
-            self.CheckNoSuccess(rv)            
+    
+        rv=is_ExitCamera (self.cid)
+        self.CheckNoSuccess(rv)            
     
     property AutoBlackLevel:
         
@@ -609,10 +608,7 @@ cdef class Cam:
             try:
                 MinW,MaxW,WStep,MinH,MaxH,HStep,PGHor,PGVer=AOIinfo[self.SensorID]
             except KeyError:
-                #raise KeyError("The current camera is not defined in the AOIinfo dict")
-                print "Pyueye Warning: The current camera is not defined in the AOIinfo dict."
-                print "Using default AOI constraints. Hope they work."
-                MinW,MaxW,WStep,MinH,MaxH,HStep,PGHor,PGVer = (32, 1280,4,4,1024,2,4,2)
+                raise KeyError("The current camera is not defined in the AOIinfo dict")
             #Check values are on the correct grid positions
             rectAOI.s32X= <int>(rectAOI.s32X/PGHor)*PGHor
             rectAOI.s32Y= <int>(rectAOI.s32Y/PGVer)*PGVer
@@ -628,8 +624,8 @@ cdef class Cam:
             
             
             ##Config the AOI so it is shown in the absolute position
-            #rectAOI.s32X|=c_IS_AOI_IMAGE_POS_ABSOLUTE
-            #rectAOI.s32Y|=c_IS_AOI_IMAGE_POS_ABSOLUTE
+            rectAOI.s32X|=c_IS_AOI_IMAGE_POS_ABSOLUTE
+            rectAOI.s32Y|=c_IS_AOI_IMAGE_POS_ABSOLUTE
             rv=is_AOI (self.cid, c_IS_AOI_IMAGE_SET_AOI, &rectAOI, sizeof(rectAOI))
             self.CheckNoSuccess(rv)
             ##Save the current AOI
@@ -720,85 +716,22 @@ cdef class Cam:
         
         def __get__(self):
             return is_SetGamma (self.cid, c_IS_GET_GAMMA)/100.
-            
-    def ReadEEPROM(self, raw=False):
-        ''' Read the 64-byte user data EEPROM from the camera.
 
-        Syntax:
-        =======
-        eeprom = cam.ReadEEPROM([raw])
-
-        
-        Input Parameters:
-        =================
-        raw:    True to return a 64-element list of the eeprom bytes.
-                False (default) to return a friendly python 'bytes' string up to
-                the first null-terminator.
+    property Gain:
+        '''
+        Set/Get hardware gain of camera
 
         Return Value:
         =============
-        eeprom: Depending on "raw" parameter, either a list or a 'bytes' string
-                containing the user EEPROM.
+            SUCCESS: Function executed successfully
         '''
-        cdef char *c_eeprom = <char*>calloc( 64, sizeof(char) )
-        cdef bytes py_eeprom
-        rv = is_ReadEEPROM( self.cid, 0, c_eeprom, 64 )
-        self.CheckNoSuccess(rv, "ReadEEPROM")
-        if raw:
-            raw_eeprom = [0]*64
-            for i in range(64):
-                raw_eeprom[i] = c_eeprom[i]
-            return raw_eeprom
-        else:
-            py_eeprom = c_eeprom
-            #stdlib.free(c_eeprom)
-            return py_eeprom
-    def WriteEEPROM(self, data, INT addr = 0, INT count = 0):
-        ''' Write to the 64-byte user data EEPROM on the camera.
+        def __set__(self, INT value):
+            rv = is_SetHardwareGain (self.cid, value, c_IS_IGNORE_PARAMETER, c_IS_IGNORE_PARAMETER, c_IS_IGNORE_PARAMETER)
+            self.CheckNoSuccess(rv)
 
-        Syntax:
-        =======
-        cam.WriteEEPROM(data, [addr])
-        
-        Input Parameters:
-        =================
-        data:   Either a 'bytes' string or a list of ints or chars.
-        addr:   Start byte for write. 0 (default) to start at beginning.
-        count:  Number of bytes to write. 0 (default) to write all of 'data'.
-                If count > len(data), EEPROM is padded with zeroes. 
-                Use 64 to ensure no remnants are left over.  
-
-        Notes:
-        =============
-        If len(data) + addr is greater than 64, or if communication breaks down,
-        or if data contains something other than chars and integers,
-        an exception is thrown.
-        If 'data' is a string, it will be zero-terminated in EEPROM.
-        '''
-
-        if count == 0:
-            count = len(data)
-            # Zero-terminate if it's a string:
-            if type(data) == str:
-                count += 1
-
-        if count + addr > 64:
-            raise Exception( "Attempted to write past end of 64-byte EEPROM." )
-
-        cdef char *c_eeprom = <char*>calloc( 64, sizeof(char) )
-        for i in range(count):
-            if i < len(data):
-                d = data[i]
-                if type(d) == str:
-                    d = ord(d)
-            else:
-                d = 0
-            if type(d) != int:
-                raise Exception( "Data must contain only chars or ints. data[%d] = %s" % (i, d) )
-            c_eeprom[i] = d
-        rv = is_WriteEEPROM( self.cid, addr, c_eeprom, count )
-        self.CheckNoSuccess(rv, "writeEEPROM")
-        
+        def __get__(self):
+            return is_SetHardwareGain(self.cid, c_IS_GET_MASTER_GAIN, c_IS_IGNORE_PARAMETER, c_IS_IGNORE_PARAMETER, c_IS_IGNORE_PARAMETER)
+            
         
             
     def WaitEvent(self, INT which, INT timeout):
@@ -940,28 +873,30 @@ cdef class Cam:
             "ETH_BUFFER_OVERRUN": status.adwCapStatusCnt_Detail[c_IS_CAP_STATUS_ETH_BUFFER_OVERRUN],
             "ETH_MISSED_IMAGES": status.adwCapStatusCnt_Detail[c_IS_CAP_STATUS_ETH_MISSED_IMAGES],
             }
-
-    cdef char * GetNextBuffer(self, timeout=1000):
-        """ Get the next valid image buffer
-        
-            Returns NULL if timeout is reached.
-        """
+    cdef char * GetNextBuffer(self):
+        """ Get the next valid image buffer"""
         
         cdef char * img
         cdef int rv
         cdef int tries=0
         
-        # Wait for the event to come in:
-        rv= is_WaitEvent(self.cid, c_IS_SET_EVENT_FRAME, timeout);
-        if rv == c_IS_TIMED_OUT:
-            #print "pyueye: GetNextBuffer's WaitEvent timed out."
-            return NULL
-        self.CheckNoSuccess(rv, "GetNextBuffer WaitEvent")
-
-        # Grab the image:
-        rv= is_GetImageMem(self.cid, <VOID**> &img)
-        self.CheckNoSuccess(rv, "GetImageMem") 
         
+        while True:
+            rv= is_GetImageMem(self.cid, <VOID**> &img)
+            #print "GetImageMem - rv: %d, Buffer: %d" % (rv, <int>img)
+            self.CheckNoSuccess(rv, "First GetImageMem") 
+            if img != self.LastSeqBuf1 :break
+            tries+=1
+            if tries ==3: return NULL
+            
+            rv=is_EnableEvent(self.cid, c_IS_SET_EVENT_FRAME);
+            self.CheckNoSuccess(rv, "EnableEvent")
+            rv= is_WaitEvent(self.cid, c_IS_SET_EVENT_FRAME, 1000);
+            self.CheckNoSuccess(rv, "Error in GetNextBuffer WaitEvent")
+            
+            rv=is_DisableEvent(self.cid, c_IS_SET_EVENT_FRAME);
+            
+        self.LastSeqBuf1=img
         return img
 
     def GrabImage(self, BGR=False, UINT Timeout=500, LeaveLocked=False, char AOI=False):
@@ -973,9 +908,6 @@ cdef class Cam:
         When using Live mode, it is highly recommended to use LeaveLocked=True,
         so that the frame you are using doesn't get overwritten by the driver.
         The frame will be unlocked on the next call to GrabImage, or by UnlockLastBuf.
-
-        TODO: The AOI thing doesn't currently work because the cam.AOI property doesn't
-              set absolute mode. Need to work out a way to do that.
         
         Syntax:
         =======
@@ -1000,7 +932,7 @@ cdef class Cam:
             The buffer will be unlocked on the next call to GrabImage.
         AOI:
             When True, the returned data will have the AOI shape if not the whole
-            image buffer will be returned. NOTE: Currently this does nothing.
+            image buffer will be returned
 
         Return Value:
         =============
@@ -1030,12 +962,8 @@ cdef class Cam:
 
         cdef char * img
         
-        # Wait for new frame to come in:
-        img=self.GetNextBuffer(Timeout)
-
-        if img == NULL:
-            # Must have timed out.
-            return 0
+        
+        img=self.GetNextBuffer()
         
         # Unlock previous buffer here, so there's no chance of overwrite.
         if self.LastSeqBufLocked:
@@ -1073,10 +1001,10 @@ cdef class Cam:
         
         self.LastSeqBuf = img
         
-        #if AOI:
-        #    return data[self.AOIy0:self.AOIy1,self.AOIx0:self.AOIx1]
-        #else:
-        return data
+        if AOI:
+            return data[self.AOIy0:self.AOIy1,self.AOIx0:self.AOIx1]
+        else:
+            return data
 
     
     def UnlockLastBuf(self):
@@ -1123,8 +1051,6 @@ cdef class Cam:
         rv=is_GetFramesPerSecond (self.cid, &dblFPS)
         self.CheckNoSuccess(rv)
         return dblFPS
-        
-   
     
     def SetFrameRate(self, double FPS):
         '''Set the Frame rate
@@ -1515,90 +1441,7 @@ cdef class Cam:
         rv=is_SetGlobalShutter (self.cid, mode)
         self.CheckNoSuccess(rv)
         return rv
-        
-    def SetHardwareGain (self, INT nMaster, INT nRed, INT nGreen, INT nBlue):
-        ''' Set hardware gain
-        
-        SetHardwareGain() controls the sensor gain channels. These can be set 
-        between 0% and 100% independently of of each other. The actual gain factor 
-        obtained for the value 100% depends on the sensor.
 
-        You can use the GetSensorInfo() function to query the available gain controls.
-        Depending on the time when the gain settings are changed, these changes 
-        might only become effective when the next image is captured.
-        
-        ** Enabling hardware gain increases not only the image brightness, 
-        but also the image noise. We recommend to use gain values 
-        below 50 for normal operation. 
-        
-        The default setting values for the red, green and blue channel gain factors 
-        depend on the colour correction matrix that has been set. 
-        If you select a different colour correction matrix, the returned default values 
-        might change (see also SetColorCorrection()).**
-        
-        Syntax:
-        =======
-        
-        rv=cam.SetHardwareGain(nMaster, nRed, nGreen, nBlue)
-        
-        Input Parameters:
-        =================
-        
-        nMaster: 
-            Sets the overall gain factor (0...100).
-            
-            IGNORE_PARAMETER: The master gain factor will not be changed.
-            
-            GET_MASTER_GAIN: Returns the master gain factor.
-            
-            GET_RED_GAIN: Returns the red channel gain factor.
-            
-            GET_GREEN_GAIN: Returns the green channel gain factor.
-            
-            GET_BLUE_GAIN: Returns the blue channel gain factor.
-            
-            GET_DEFAULT_MASTER: Returns the default master gain factor.
-            
-            GET_DEFAULT_RED: Returns the default red channel gain factor.
-            
-            GET_DEFAULT_GREEN: Returns the default green channel gain factor.
-            
-            GET_DEFAULT_BLUE: Returns the default blue channel gain factor.
-            
-            SET_ENABLE_AUTO_GAIN: Enables the auto gain functionality 
-            (see also SetAutoParameter()). You can disable the auto gain functionality
-            by setting a value for nMaster.
-
-        nRed: 
-            Sets the red channel gain factor (0...100).
-        
-            IGNORE_PARAMETER: The channel gain factor will not be changed.
-        
-        nGreen: 
-            Sets the green channel gain factor (0...100).
-        
-            IGNORE_PARAMETER: The green channel gain factor will not be changed.
-
-        nBlue: 
-            Sets the blue channel gain factor (0...100).
-            IGNORE_PARAMETER: The blue channel gain factor will not be changed.
-        
-        Return Values:
-        ==============
-        
-        rv:
-            SUCCESS: Function executed successfully
-        
-            Current setting when used together with GET_MASTER_GAIN, GET_RED_GAIN,
-            GET_GREEN_GAIN, GET_BLUE_GAIN
-    
-            INVALID_MODE: Camera is in standby mode, function not allowed.      
-        '''
-        
-        rv=is_SetHardwareGain (self.cid, nMaster, nRed, nGreen, nBlue)
-        self.CheckNoSuccess(rv)
-        return rv
-    
     def SetHardwareGamma (self, INT nMode):
         ''' Set the hardware gamma value
                 
@@ -2605,8 +2448,6 @@ cdef class Cam:
 
             err += "API call returned %d, " % rv
             rv1 = is_GetError (self.cid, &rv, &ermsg)
-            if rv1 == 1:
-                raise Exception(err + "Camera handle is not valid.")
             if rv1 != c_IS_SUCCESS:
                 raise Exception(err + "but no error message available.")
             raise Exception(err + "'" + ermsg + "'")
@@ -2687,6 +2528,7 @@ cdef class Cam:
         cdef npy.ndarray[npy.float_t, ndim = 2] av = zero_mat(h,w)
         
         cdef char * img
+        cdef int Timeout=1000 ### Deberia entrar como atributo de la funcion
         
         if n==0: n=1;
         ##This seems to work fine, but when I try to exit video mode it frezes
@@ -2696,17 +2538,27 @@ cdef class Cam:
 #~             print >> stderr, "Camera dropped out of Live mode. Re-starting..."
 #~             self.CaptureVideo(c_IS_WAIT)
         
+        # If we are supposed to be in Live Mode, make sure we still are:
+        if (self.LiveMode and not self.IsLive()):
+            print >> stderr, "Camera dropped out of Live mode. Re-starting..."
+            self.CaptureVideo(c_IS_WAIT)
+        
         if self.colormode==c_IS_CM_MONO8:
             ##Grab first image
-            rv= is_FreezeVideo (self.cid, c_IS_WAIT)
-            self.CheckNoSuccess(rv)
+            # If we aren't in Live mode, kick off a single capture:
+            if (not self.LiveMode):
+                rv= is_FreezeVideo (self.cid, Timeout)
+                self.CheckNoSuccess(rv)
+      
             img=self.GetNextBuffer()
             
             ##The last grab is lost
             for i in range(n):
                 ## Do the average while the next image is grabbed
-                rv= is_FreezeVideo (self.cid, c_IS_WAIT)
-                self.CheckNoSuccess(rv)
+                if (not self.LiveMode):
+                    rv= is_FreezeVideo (self.cid, c_IS_DONT_WAIT)
+                    self.CheckNoSuccess(rv)
+                
                 for y in range(self.AOIy0,self.AOIy1):
                     ya=y*self.LineInc
                     for x in range(self.AOIx0,self.AOIx1):
