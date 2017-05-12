@@ -1311,7 +1311,6 @@ cdef extern from "ueye.h":
     INT is_SetErrorReport(HIDS hCam, INT Mode) # (('hCam', ['HIDS'], None), ('Mode', ['INT'], None))
     INT is_ForceTrigger(HIDS hCam) # (('hCam', ['HIDS'], None),)
     INT is_CopyImageMem(HIDS hCam, char* pcSource, int nID, char* pcDest) # (('hCam', ['HIDS'], None), ('pcSource', ['char', '*'], None), ('nID', ['int'], None), ('pcDest', ['char', '*'], None))
-    INT is_Gamma(HIDS hCam, UINT nCommand, void* pParam, UINT cbSizeOfParams) # (('hCam', ['HIDS'], None), ('nCommand', ['UINT'], None), ('pParam', ['void', '*'], None), ('cbSizeOfParams', ['UINT'], None))
     INT is_Focus(HIDS hCam, UINT nCommand, void* pParam, UINT nSizeOfParam) # (('hCam', ['HIDS'], None), ('nCommand', ['UINT'], None), ('pParam', ['void', '*'], None), ('nSizeOfParam', ['UINT'], None))
     INT is_GetNumberOfDevices() # ((None, ['void'], None),)
     INT is_GetHdrKneepointInfo(HIDS hCam, KNEEPOINTINFO* KneepointInfo, INT KneepointInfoSize) # (('hCam', ['HIDS'], None), ('KneepointInfo', ['KNEEPOINTINFO', '*'], None), ('KneepointInfoSize', ['INT'], None))
@@ -2084,7 +2083,6 @@ cdef extern from "ueye.h":
     int       c_IS_COLORMODE_INVALID "IS_COLORMODE_INVALID"
     int       c_IS_SENSOR_UI112X_C "IS_SENSOR_UI112X_C"
     int       c_IS_SET_SENS_AUTO_SHUTTER_PHOTOM "IS_SET_SENS_AUTO_SHUTTER_PHOTOM"
-    int       c_IS_GAMMA_CMD_SET "IS_GAMMA_CMD_SET"
     int       c_IS_LOG_MODE_OFF "IS_LOG_MODE_OFF"
     int       c_IS_MEMORY_BOARD_ACTIVATED "IS_MEMORY_BOARD_ACTIVATED"
     int       c_IS_CAMERA_LUT_ONLY_RED "IS_CAMERA_LUT_ONLY_RED"
@@ -2160,7 +2158,6 @@ cdef extern from "ueye.h":
     int       c_IS_BOARD_TYPE_UEYE_ETH_HE "IS_BOARD_TYPE_UEYE_ETH_HE"
     int       c_IS_EXPOSURE_CMD_GET_CAPS "IS_EXPOSURE_CMD_GET_CAPS"
     int       c_IS_CANT_COMMUNICATE_WITH_DRIVER "IS_CANT_COMMUNICATE_WITH_DRIVER"
-    int       c_IS_GAMMA_CMD_GET "IS_GAMMA_CMD_GET"
     int       c_IS_DD_OVERLAY_NOT_ENABLED "IS_DD_OVERLAY_NOT_ENABLED"
     int       c_IS_DEVICE_FEATURE_CMD_GET_LINESCAN_NUMBER "IS_DEVICE_FEATURE_CMD_GET_LINESCAN_NUMBER"
     int       c_IS_GET_DEFAULT_GREEN_GAIN_FACTOR "IS_GET_DEFAULT_GREEN_GAIN_FACTOR"
