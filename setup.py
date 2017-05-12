@@ -48,6 +48,7 @@ extNames = scandir(".")
 # and build up the set of Extension objects
 extensions = [makeExtension(name) for name in extNames]
 
+print extNames
 
 setup(
         #Version del ueye para la que esto funciona
@@ -60,6 +61,7 @@ setup(
         url='',
         ext_modules=cythonize(extensions),
         packages=["ueye","wxueye"],
+        package_data={'ueye': ['*.pxd']},
         scripts=['wxVidCap.py'],
         cmdclass = {'build_ext': build_ext},
     )
