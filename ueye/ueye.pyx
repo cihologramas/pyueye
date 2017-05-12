@@ -653,8 +653,8 @@ cdef class Cam:
         def __get__(self):
             cdef double nvalue
             rv=is_SetFrameRate(self.cid,c_IS_GET_FRAMERATE,&nvalue)
-            return nvalue 
-            
+            return nvalue
+
     property FrameTimeRange:
         def __get__(self):
             '''Returns the frame rate settings
@@ -688,7 +688,26 @@ cdef class Cam:
             rv=is_GetFrameTimeRange (self.cid, &min, &max, &intervall)
             self.CheckNoSuccess(rv)
             return (min,max,intervall)
-    
+
+    property Gain:
+        '''
+        Set/Get hardware gain of camera
+
+        Return Value:
+        =============
+            SUCCESS: Function executed successfully
+        '''
+
+
+        def __set__(self, INT value):
+            rv = is_SetHardwareGain(self.cid, value, c_IS_IGNORE_PARAMETER, c_IS_IGNORE_PARAMETER, c_IS_IGNORE_PARAMETER)
+            self.CheckNoSuccess(rv)
+
+
+        def __get__(self):
+            return is_SetHardwareGain(self.cid, c_IS_GET_MASTER_GAIN, c_IS_IGNORE_PARAMETER, c_IS_IGNORE_PARAMETER,
+                                      c_IS_IGNORE_PARAMETER)
+
     property Gamma:
         ''' Set gamma correction
         
@@ -698,7 +717,7 @@ cdef class Cam:
     
         
         GET_GAMMA: Returns the current setting.
-        
+                
         Return Value:
         =============
             SUCCESS: Function executed successfully
@@ -711,27 +730,15 @@ cdef class Cam:
             if g<0: g=1
             if g>1000: g=1000
             
-            rv=is_SetGamma (self.cid, g)
+            rv=is_Gamma (self.cid, c_IS_GAMMA_CMD_SET, &g, sizeof(g))
             self.CheckNoSuccess(rv)
         
         def __get__(self):
-            return is_SetGamma (self.cid, c_IS_GET_GAMMA)/100.
+            cdef int g
+            is_Gamma(self.cid, c_IS_GAMMA_CMD_GET, & g, sizeof(g))
+            return g/100.
 
-    property Gain:
-        '''
-        Set/Get hardware gain of camera
 
-        Return Value:
-        =============
-            SUCCESS: Function executed successfully
-        '''
-        def __set__(self, INT value):
-            rv = is_SetHardwareGain (self.cid, value, c_IS_IGNORE_PARAMETER, c_IS_IGNORE_PARAMETER, c_IS_IGNORE_PARAMETER)
-            self.CheckNoSuccess(rv)
-
-        def __get__(self):
-            return is_SetHardwareGain(self.cid, c_IS_GET_MASTER_GAIN, c_IS_IGNORE_PARAMETER, c_IS_IGNORE_PARAMETER, c_IS_IGNORE_PARAMETER)
-            
         
             
     def WaitEvent(self, INT which, INT timeout):
