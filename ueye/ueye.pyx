@@ -730,13 +730,11 @@ cdef class Cam:
             if g<0: g=1
             if g>1000: g=1000
             
-            rv=is_Gamma (self.cid, c_IS_GAMMA_CMD_SET, &g, sizeof(g))
+            rv=rv=is_SetGamma (self.cid, g)
             self.CheckNoSuccess(rv)
         
         def __get__(self):
-            cdef int g
-            is_Gamma(self.cid, c_IS_GAMMA_CMD_GET, & g, sizeof(g))
-            return g/100.
+            return is_SetGamma(self.cid, c_IS_GET_GAMMA) / 100.
 
 
         
