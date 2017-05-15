@@ -360,23 +360,7 @@ cdef class Cam:
     cam:
         Instance to the Cam class assigned to the requested cam.
     '''
-    cdef char **Imgs
-    cdef int BufCount
-    cdef int *BufIds
-    cdef char *LastSeqBuf
-    cdef char *LastSeqBuf1
-    cdef char LastSeqBufLocked
-    cdef public HIDS cid
-    cdef public INT nMaxWidth,nMaxHeight,nColorMode, colormode
-    cdef public object SerNo,ID,Version,Date,Select,SensorID,strSensorName, \
-            bMasterGain, bRGain, bGGain, bBGain, \
-            bGlobShutter, bitspixel
-    cdef public INT LineInc, 
-    cdef public int ImgMemId
-    cdef public int LiveMode
-    cdef public INT AOIx0, AOIy0, AOIx1, AOIy1, AOIwidth, AOIheight ##Buffers to save the AOI to speed up the image grabbing
-    
-        
+
     def __init__(self, HIDS cid=0, int bufCount=3,livemode=True):
     
     
@@ -387,8 +371,7 @@ cdef class Cam:
             raise Exception("The camera's starter firmware is not compatible with the driver and needs to be updated.")
         
         self.cid=cid
-        
-       
+
         
         
         cdef CAMINFO cInfo
@@ -904,7 +887,7 @@ cdef class Cam:
         self.LastSeqBuf1=img
         return img
 
-    cdef unsigned char [:,:] GrabImageGS(self, UINT Timeout=500, bint LeaveLocked=False, bint AOI = False):
+    cpdef unsigned char [:,:] GrabImageGS(self, UINT Timeout=500, bint LeaveLocked=False, bint AOI = False):
         "Method to capture an image in grayscale to be used only in cython"
 
         cdef unsigned char [:,:] data
