@@ -904,6 +904,49 @@ cdef class Cam:
         self.LastSeqBuf1=img
         return img
 
+    cdef unsigned char [:,:] GrabImageGS(self, UINT Timeout=500, bint LeaveLocked=False, bint AOI = False):
+        "Method to capture an image in grayscale to be used only in cython"
+
+        cdef unsigned char [:,:] data
+        # If we are supposed to be in Live Mode, make sure we still are:
+        if (self.LiveMode and not self.IsLive()):
+            print >> stderr, "Camera dropped out of Live mode. Re-starting..."
+            self.CaptureVideo(c_IS_WAIT)
+
+        # If we aren't in Live mode, kick off a single capture:
+        if (not self.LiveMode):
+            rv= is_FreezeVideo (self.cid, Timeout)
+            self.CheckNoSuccess(rv)
+
+        cdef char * img
+
+
+        img=self.GetNextBuffer()
+
+        # Unlock previous buffer here, so there's no chance of overwrite.
+        if self.LastSeqBufLocked:
+            rv= is_UnlockSeqBuf(self.cid, c_IS_IGNORE_PARAMETER, self.LastSeqBuf)
+            if rv != c_IS_SUCCESS:
+                print >> stderr, "Buffer %d didn't unlock." % (<int>self.LastSeqBuf)
+            self.LastSeqBufLocked=False
+
+
+        #Convertir a memview
+        data = <unsigned char [:self.nMaxHeight, :self.LineInc] > <unsigned char *>img
+
+        # Lock the buffer if requested:
+        if LeaveLocked:
+            rv= is_LockSeqBuf(self.cid, c_IS_IGNORE_PARAMETER, img)
+            self.CheckNoSuccess(rv)
+            self.LastSeqBufLocked=True
+
+        self.LastSeqBuf = img
+
+        if AOI:
+            return data[self.AOIy0:self.AOIy1,self.AOIx0:self.AOIx1]
+        else:
+            return data
+
     def GrabImage(self, BGR=False, UINT Timeout=500, LeaveLocked=False, char AOI=False):
         '''Grabs and reads an image from the camera and returns a numpy array
 
