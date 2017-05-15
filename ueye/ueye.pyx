@@ -374,7 +374,7 @@ cdef class Cam:
     cdef public INT LineInc, 
     cdef public int ImgMemId
     cdef public int LiveMode
-    cdef INT AOIx0,AOIy0,AOIx1,AOIy1 ##Buffers to save the AOI to speed up the image grabbing
+    cdef public INT AOIx0,AOIy0,AOIx1,AOIy1 ##Buffers to save the AOI to speed up the image grabbing
     
         
     def __init__(self, HIDS cid=0, int bufCount=3,livemode=True):
