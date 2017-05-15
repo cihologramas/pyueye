@@ -374,7 +374,7 @@ cdef class Cam:
     cdef public INT LineInc, 
     cdef public int ImgMemId
     cdef public int LiveMode
-    cdef public INT AOIx0,AOIy0,AOIx1,AOIy1 ##Buffers to save the AOI to speed up the image grabbing
+    cdef public INT AOIx0, AOIy0, AOIx1, AOIy1, AOIwidth, AOIheight ##Buffers to save the AOI to speed up the image grabbing
     
         
     def __init__(self, HIDS cid=0, int bufCount=3,livemode=True):
@@ -469,9 +469,9 @@ cdef class Cam:
         
         ##Save the initial AOI this is used to speed up the GrabImage when using
         ##AOI=True
-        self.AOIx0,self.AOIy0,w,h=self.AOI
-        self.AOIx1=self.AOIx0+w
-        self.AOIy1=self.AOIy0+h
+        self.AOIx0,self.AOIy0,self.AOIwidth,self.AOIheight=self.AOI
+        self.AOIx1=self.AOIx0+self.AOIwidth
+        self.AOIy1=self.AOIy0+self.AOIheight
         
 
     def __dealloc__(self):
@@ -629,9 +629,9 @@ cdef class Cam:
             rv=is_AOI (self.cid, c_IS_AOI_IMAGE_SET_AOI, &rectAOI, sizeof(rectAOI))
             self.CheckNoSuccess(rv)
             ##Save the current AOI
-            self.AOIx0,self.AOIy0,w,h=self.AOI
-            self.AOIx1=self.AOIx0+w
-            self.AOIy1=self.AOIy0+h
+            self.AOIx0,self.AOIy0,self.AOIwidth,self.AOIheight=self.AOI
+            self.AOIx1=self.AOIx0+self.AOIwidth
+            self.AOIy1=self.AOIy0+self.AOIheight
             
             if self.AOI != value: 
                 print >> stderr, "The value passed to set the AOI is invalid for the current sensor."
@@ -1007,7 +1007,7 @@ cdef class Cam:
         self.LastSeqBuf = img
         
         if AOI:
-            return data[self.AOIy0:self.AOIy1,self.AOIx0:self.AOIx1]
+            return data[self.AOIy0:self.AOIheight,self.AOIx0:self.AOIwidth]
         else:
             return data
 
