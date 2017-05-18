@@ -360,23 +360,7 @@ cdef class Cam:
     cam:
         Instance to the Cam class assigned to the requested cam.
     '''
-    cdef char **Imgs
-    cdef int BufCount
-    cdef int *BufIds
-    cdef char *LastSeqBuf
-    cdef char *LastSeqBuf1
-    cdef char LastSeqBufLocked
-    cdef public HIDS cid
-    cdef public INT nMaxWidth,nMaxHeight,nColorMode, colormode
-    cdef public object SerNo,ID,Version,Date,Select,SensorID,strSensorName, \
-            bMasterGain, bRGain, bGGain, bBGain, \
-            bGlobShutter, bitspixel
-    cdef public INT LineInc, 
-    cdef public int ImgMemId
-    cdef public int LiveMode
-    cdef INT AOIx0,AOIy0,AOIx1,AOIy1 ##Buffers to save the AOI to speed up the image grabbing
-    
-        
+
     def __init__(self, HIDS cid=0, int bufCount=3,livemode=True):
     
     
@@ -387,8 +371,7 @@ cdef class Cam:
             raise Exception("The camera's starter firmware is not compatible with the driver and needs to be updated.")
         
         self.cid=cid
-        
-       
+
         
         
         cdef CAMINFO cInfo
@@ -469,9 +452,9 @@ cdef class Cam:
         
         ##Save the initial AOI this is used to speed up the GrabImage when using
         ##AOI=True
-        self.AOIx0,self.AOIy0,w,h=self.AOI
-        self.AOIx1=self.AOIx0+w
-        self.AOIy1=self.AOIy0+h
+        self.AOIx0,self.AOIy0,self.AOIwidth,self.AOIheight=self.AOI
+        self.AOIx1=self.AOIx0+self.AOIwidth
+        self.AOIy1=self.AOIy0+self.AOIheight
         
 
     def __dealloc__(self):
@@ -629,9 +612,9 @@ cdef class Cam:
             rv=is_AOI (self.cid, c_IS_AOI_IMAGE_SET_AOI, &rectAOI, sizeof(rectAOI))
             self.CheckNoSuccess(rv)
             ##Save the current AOI
-            self.AOIx0,self.AOIy0,w,h=self.AOI
-            self.AOIx1=self.AOIx0+w
-            self.AOIy1=self.AOIy0+h
+            self.AOIx0,self.AOIy0,self.AOIwidth,self.AOIheight=self.AOI
+            self.AOIx1=self.AOIx0+self.AOIwidth
+            self.AOIy1=self.AOIy0+self.AOIheight
             
             if self.AOI != value: 
                 print >> stderr, "The value passed to set the AOI is invalid for the current sensor."
@@ -711,11 +694,19 @@ cdef class Cam:
             if g<0: g=1
             if g>1000: g=1000
             
+<<<<<<< HEAD
             rv=is_SetGamma (self.cid, g)
             self.CheckNoSuccess(rv)
         
         def __get__(self):
             return is_SetGamma (self.cid, c_IS_GET_GAMMA)/100.
+=======
+            rv=rv=is_SetGamma (self.cid, g)
+            self.CheckNoSuccess(rv)
+        
+        def __get__(self):
+            return is_SetGamma(self.cid, c_IS_GET_GAMMA) / 100.
+>>>>>>> 4.30
 
     property Gain:
         '''
@@ -899,6 +890,49 @@ cdef class Cam:
         self.LastSeqBuf1=img
         return img
 
+    cpdef unsigned char [:,:] GrabImageGS(self, UINT Timeout=500, bint LeaveLocked=False, bint AOI = False):
+        "Method to capture an image in grayscale to be used only in cython"
+
+        cdef unsigned char [:,:] data
+        # If we are supposed to be in Live Mode, make sure we still are:
+        if (self.LiveMode and not self.IsLive()):
+            print >> stderr, "Camera dropped out of Live mode. Re-starting..."
+            self.CaptureVideo(c_IS_WAIT)
+
+        # If we aren't in Live mode, kick off a single capture:
+        if (not self.LiveMode):
+            rv= is_FreezeVideo (self.cid, Timeout)
+            self.CheckNoSuccess(rv)
+
+        cdef char * img
+
+
+        img=self.GetNextBuffer()
+
+        # Unlock previous buffer here, so there's no chance of overwrite.
+        if self.LastSeqBufLocked:
+            rv= is_UnlockSeqBuf(self.cid, c_IS_IGNORE_PARAMETER, self.LastSeqBuf)
+            if rv != c_IS_SUCCESS:
+                print >> stderr, "Buffer %d didn't unlock." % (<int>self.LastSeqBuf)
+            self.LastSeqBufLocked=False
+
+
+        #Convertir a memview
+        data = <unsigned char [:self.nMaxHeight, :self.LineInc] > <unsigned char *>img
+
+        # Lock the buffer if requested:
+        if LeaveLocked:
+            rv= is_LockSeqBuf(self.cid, c_IS_IGNORE_PARAMETER, img)
+            self.CheckNoSuccess(rv)
+            self.LastSeqBufLocked=True
+
+        self.LastSeqBuf = img
+
+        if AOI:
+            return data[self.AOIy0:self.AOIy1,self.AOIx0:self.AOIx1]
+        else:
+            return data
+
     def GrabImage(self, BGR=False, UINT Timeout=500, LeaveLocked=False, char AOI=False):
         '''Grabs and reads an image from the camera and returns a numpy array
 
@@ -1002,7 +1036,7 @@ cdef class Cam:
         self.LastSeqBuf = img
         
         if AOI:
-            return data[self.AOIy0:self.AOIy1,self.AOIx0:self.AOIx1]
+            return data[self.AOIy0:self.AOIheight,self.AOIx0:self.AOIwidth]
         else:
             return data
 
