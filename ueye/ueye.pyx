@@ -694,19 +694,11 @@ cdef class Cam:
             if g<0: g=1
             if g>1000: g=1000
             
-<<<<<<< HEAD
             rv=is_SetGamma (self.cid, g)
             self.CheckNoSuccess(rv)
         
         def __get__(self):
             return is_SetGamma (self.cid, c_IS_GET_GAMMA)/100.
-=======
-            rv=rv=is_SetGamma (self.cid, g)
-            self.CheckNoSuccess(rv)
-        
-        def __get__(self):
-            return is_SetGamma(self.cid, c_IS_GET_GAMMA) / 100.
->>>>>>> 4.30
 
     property Gain:
         '''
